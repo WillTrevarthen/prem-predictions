@@ -1,0 +1,221 @@
+#,Club,,Expenditure,Arrivals,Income,Departures,Balance,season_start
+1,Manchester City,Manchester City,€208.47m,22,€67.44m,25,€-141.03m,2015
+2,Manchester United,Manchester United,€156.00m,21,€100.67m,20,€-55.33m,2015
+3,Liverpool FC,Liverpool FC,€126.50m,24,€90.55m,24,€-35.95m,2015
+4,Newcastle United,Newcastle United,€107.91m,26,€5.43m,23,€-102.48m,2015
+5,Chelsea FC,Chelsea FC,€96.50m,39,€87.49m,37,€-9.01m,2015
+6,Watford FC,Watford FC,€82.80m,33,€9.75m,30,€-73.05m,2015
+7,Tottenham Hotspur,Tottenham Hotspur,€71.00m,11,€87.25m,21,€16.25m,2015
+8,Aston Villa,Aston Villa,€66.55m,29,€64.70m,32,€-1.85m,2015
+9,Sunderland AFC,Sunderland AFC,€66.05m,29,€11.00m,25,€-55.05m,2015
+10,Southampton FC,Southampton FC,€60.10m,16,€52.70m,17,€-7.40m,2015
+11,AFC Bournemouth,AFC Bournemouth,€55.11m,36,€650k,33,€-54.46m,2015
+12,Stoke City,Stoke City,€53.65m,13,€23.20m,14,€-30.45m,2015
+13,West Ham United,West Ham United,€52.70m,25,€18.52m,26,€-34.19m,2015
+14,Norwich City,Norwich City,€50.50m,33,€21.49m,30,€-29.01m,2015
+15,Leicester City,Leicester City,€49.90m,25,€9.45m,32,€-40.45m,2015
+16,Everton FC,Everton FC,€48.20m,18,€11.00m,17,€-37.20m,2015
+17,West Bromwich Albion,West Bromwich Albion,€42.90m,12,€12.92m,13,€-29.98m,2015
+18,Crystal Palace,Crystal Palace,€28.80m,19,€5.40m,23,€-23.40m,2015
+19,Arsenal FC,Arsenal FC,€26.50m,15,€2.50m,12,€-24.00m,2015
+20,Swansea City,Swansea City,€21.81m,20,€16.81m,24,€-5.01m,2015
+1,Manchester City,Manchester City,€216.25m,31,€35.35m,25,€-180.90m,2016
+2,Manchester United,Manchester United,€185.00m,8,€47.25m,13,€-137.75m,2016
+3,Chelsea FC,Chelsea FC,€132.80m,27,€108.90m,30,€-23.90m,2016
+4,Arsenal FC,Arsenal FC,€113.00m,11,€10.35m,12,€-102.65m,2016
+5,Crystal Palace,Crystal Palace,€101.20m,22,€50.20m,24,€-51.00m,2016
+6,Leicester City,Leicester City,€92.10m,17,€66.05m,18,€-26.05m,2016
+7,Everton FC,Everton FC,€86.00m,18,€60.80m,19,€-25.20m,2016
+8,Tottenham Hotspur,Tottenham Hotspur,€83.50m,8,€52.30m,8,€-31.20m,2016
+9,West Ham United,West Ham United,€83.50m,22,€41.00m,15,€-42.50m,2016
+10,Liverpool FC,Liverpool FC,€79.90m,21,€88.98m,19,€9.08m,2016
+11,Watford FC,Watford FC,€70.45m,29,€58.10m,32,€-12.35m,2016
+12,Southampton FC,Southampton FC,€68.90m,12,€85.05m,9,€16.15m,2016
+13,Swansea City,Swansea City,€58.10m,21,€49.30m,17,€-8.80m,2016
+14,Middlesbrough FC,Middlesbrough FC,€47.95m,18,€13.50m,19,€-34.45m,2016
+15,Burnley FC,Burnley FC,€45.60m,27,€1.20m,26,€-44.40m,2016
+16,Stoke City,Stoke City,€42.17m,14,€3.80m,13,€-38.37m,2016
+17,Sunderland AFC,Sunderland AFC,€41.90m,25,€23.77m,23,€-18.13m,2016
+18,AFC Bournemouth,AFC Bournemouth,€40.69m,19,€23.69m,31,€-17.00m,2016
+19,Hull City,Hull City,€40.00m,26,€28.90m,17,€-11.10m,2016
+20,West Bromwich Albion,West Bromwich Albion,€37.90m,13,€26.98m,14,€-10.93m,2016
+1,Manchester City,Manchester City,€317.50m,31,€91.35m,32,€-226.15m,2017
+2,Chelsea FC,Chelsea FC,€260.50m,40,€194.60m,31,€-65.90m,2017
+3,Everton FC,Everton FC,€203.20m,23,€126.38m,20,€-76.82m,2017
+4,Manchester United,Manchester United,€198.40m,12,€45.50m,10,€-152.90m,2017
+5,Liverpool FC,Liverpool FC,€173.65m,13,€184.50m,15,€10.85m,2017
+6,Arsenal FC,Arsenal FC,€152.85m,10,€162.40m,16,€9.55m,2017
+7,Tottenham Hotspur,Tottenham Hotspur,€121.00m,15,€103.80m,12,€-17.20m,2017
+8,Leicester City,Leicester City,€83.85m,14,€50.10m,13,€-33.75m,2017
+9,Watford FC,Watford FC,€73.40m,32,€18.74m,30,€-54.66m,2017
+10,Swansea City,Swansea City,€73.39m,21,€81.10m,24,€7.72m,2017
+11,Brighton & Hove Albion,Brighton & Hove Albion,€70.00m,23,€400k,22,€-69.60m,2017
+12,Southampton FC,Southampton FC,€61.25m,12,€98.35m,14,€37.10m,2017
+13,Stoke City,Stoke City,€57.70m,18,€35.14m,17,€-22.56m,2017
+14,West Ham United,West Ham United,€56.80m,15,€64.02m,25,€7.22m,2017
+15,Huddersfield Town,Huddersfield Town,€56.75m,22,€6.46m,16,€-50.30m,2017
+16,Crystal Palace,Crystal Palace,€55.95m,15,€3.00m,18,€-52.95m,2017
+17,West Bromwich Albion,West Bromwich Albion,€53.50m,17,€2.05m,11,€-51.45m,2017
+18,Newcastle United,Newcastle United,€46.50m,27,€21.22m,29,€-25.28m,2017
+19,Burnley FC,Burnley FC,€35.74m,20,€50.00m,22,€14.26m,2017
+20,AFC Bournemouth,AFC Bournemouth,€34.30m,15,-,14,€-34.30m,2017
+1,Chelsea FC,Chelsea FC,€208.80m,30,€83.25m,31,€-125.55m,2018
+2,Liverpool FC,Liverpool FC,€192.20m,18,€41.32m,21,€-150.88m,2018
+3,Wolverhampton Wanderers,Wolverhampton Wanderers,€117.50m,35,€23.30m,46,€-94.20m,2018
+4,Fulham FC,Fulham FC,€116.50m,18,€5.35m,11,€-111.15m,2018
+5,Leicester City,Leicester City,€114.60m,17,€95.80m,18,€-18.80m,2018
+6,West Ham United,West Ham United,€100.90m,18,€13.77m,13,€-87.14m,2018
+7,Everton FC,Everton FC,€99.80m,19,€28.65m,23,€-71.15m,2018
+8,AFC Bournemouth,AFC Bournemouth,€91.60m,14,€20.20m,16,€-71.40m,2018
+9,Brighton & Hove Albion,Brighton & Hove Albion,€90.62m,28,€13.62m,29,€-77.00m,2018
+10,Manchester United,Manchester United,€82.70m,10,€30.55m,10,€-52.15m,2018
+11,Arsenal FC,Arsenal FC,€80.15m,17,€9.10m,12,€-71.05m,2018
+12,Manchester City,Manchester City,€78.59m,19,€57.60m,22,€-20.99m,2018
+13,Southampton FC,Southampton FC,€62.25m,16,€26.10m,18,€-36.15m,2018
+14,Newcastle United,Newcastle United,€59.75m,22,€51.05m,23,€-8.70m,2018
+15,Cardiff City,Cardiff City,€51.20m,18,-,18,€-51.20m,2018
+16,Huddersfield Town,Huddersfield Town,€50.70m,14,€12.33m,16,€-38.37m,2018
+17,Burnley FC,Burnley FC,€33.00m,10,€8.00m,13,€-25.00m,2018
+18,Watford FC,Watford FC,€30.10m,26,€51.84m,27,€21.74m,2018
+19,Crystal Palace,Crystal Palace,€11.85m,11,€350k,16,€-11.50m,2018
+20,Tottenham Hotspur,Tottenham Hotspur,-,4,€5.35m,4,€5.35m,2018
+1,Manchester United,Manchester United,€236.80m,13,€81.18m,12,€-155.62m,2019
+2,Manchester City,Manchester City,€169.82m,25,€71.00m,26,€-98.82m,2019
+3,Arsenal FC,Arsenal FC,€160.80m,16,€53.65m,19,€-107.15m,2019
+4,Aston Villa,Aston Villa,€159.50m,22,€3.00m,22,€-156.50m,2019
+5,Tottenham Hotspur,Tottenham Hotspur,€150.50m,12,€64.50m,14,€-86.00m,2019
+6,Everton FC,Everton FC,€121.00m,22,€87.80m,22,€-33.20m,2019
+7,West Ham United,West Ham United,€119.80m,10,€55.73m,17,€-64.07m,2019
+8,Wolverhampton Wanderers,Wolverhampton Wanderers,€116.70m,28,€24.10m,26,€-92.60m,2019
+9,Leicester City,Leicester City,€104.30m,13,€88.50m,13,€-15.80m,2019
+10,Sheffield United,Sheffield United,€72.50m,23,€350k,21,€-72.15m,2019
+11,Newcastle United,Newcastle United,€72.40m,13,€35.64m,11,€-36.76m,2019
+12,Brighton & Hove Albion,Brighton & Hove Albion,€61.74m,25,€8.50m,30,€-53.24m,2019
+13,Southampton FC,Southampton FC,€61.50m,14,€27.30m,17,€-34.20m,2019
+14,Watford FC,Watford FC,€56.00m,21,€29.40m,21,€-26.60m,2019
+15,AFC Bournemouth,AFC Bournemouth,€54.91m,13,€34.63m,12,€-20.29m,2019
+16,Chelsea FC,Chelsea FC,€45.00m,22,€165.07m,29,€120.07m,2019
+17,Burnley FC,Burnley FC,€23.85m,8,€13.55m,11,€-10.30m,2019
+18,Liverpool FC,Liverpool FC,€10.40m,15,€48.00m,16,€37.60m,2019
+19,Norwich City,Norwich City,€8.82m,22,€2.20m,27,€-6.62m,2019
+20,Crystal Palace,Crystal Palace,€7.60m,13,€55.38m,15,€47.78m,2019
+1,Chelsea FC,Chelsea FC,€267.20m,31,€57.15m,26,€-210.05m,2020
+2,Manchester City,Manchester City,€173.40m,27,€64.00m,27,€-109.40m,2020
+3,Leeds United,Leeds United,€127.80m,16,-,16,€-127.80m,2020
+4,Tottenham Hotspur,Tottenham Hotspur,€110.50m,15,€13.30m,11,€-97.20m,2020
+5,Aston Villa,Aston Villa,€101.35m,12,€2.77m,15,€-98.58m,2020
+6,Wolverhampton Wanderers,Wolverhampton Wanderers,€87.59m,21,€79.20m,23,€-8.39m,2020
+7,Arsenal FC,Arsenal FC,€86.00m,16,€19.15m,16,€-66.85m,2020
+8,Liverpool FC,Liverpool FC,€84.80m,17,€17.20m,13,€-67.60m,2020
+9,Manchester United,Manchester United,€83.95m,17,€19.50m,17,€-64.45m,2020
+10,Everton FC,Everton FC,€74.37m,20,€4.43m,20,€-69.95m,2020
+11,Sheffield United,Sheffield United,€62.70m,16,-,19,€-62.70m,2020
+12,Leicester City,Leicester City,€59.40m,19,€53.77m,18,€-5.63m,2020
+13,West Ham United,West Ham United,€54.70m,16,€45.41m,17,€-9.29m,2020
+14,Brighton & Hove Albion,Brighton & Hove Albion,€50.10m,28,€20.60m,22,€-29.50m,2020
+15,West Bromwich Albion,West Bromwich Albion,€42.14m,23,€8.10m,22,€-34.04m,2020
+16,Newcastle United,Newcastle United,€38.75m,10,€780k,15,€-37.97m,2020
+17,Southampton FC,Southampton FC,€37.30m,23,€26.30m,18,€-11.00m,2020
+18,Fulham FC,Fulham FC,€37.25m,23,-,19,€-37.25m,2020
+19,Crystal Palace,Crystal Palace,€22.40m,12,€20.00m,8,€-2.40m,2020
+20,Burnley FC,Burnley FC,€1.10m,6,€2.30m,6,€1.20m,2020
+1,Arsenal FC,Arsenal FC,€167.40m,13,€31.40m,20,€-136.00m,2021
+2,Manchester United,Manchester United,€142.00m,16,€31.10m,14,€-110.90m,2021
+3,Manchester City,Manchester City,€138.90m,22,€93.80m,24,€-45.10m,2021
+4,Newcastle United,Newcastle United,€130.50m,12,-,10,€-130.50m,2021
+5,Aston Villa,Aston Villa,€129.80m,22,€127.00m,18,€-2.80m,2021
+6,Chelsea FC,Chelsea FC,€118.00m,21,€157.59m,23,€39.59m,2021
+7,Tottenham Hotspur,Tottenham Hotspur,€95.90m,14,€34.62m,19,€-61.28m,2021
+8,Liverpool FC,Liverpool FC,€89.00m,14,€31.65m,12,€-57.35m,2021
+9,Crystal Palace,Crystal Palace,€85.62m,13,-,15,€-85.62m,2021
+10,Brighton & Hove Albion,Brighton & Hove Albion,€75.58m,26,€78.80m,29,€3.22m,2021
+11,West Ham United,West Ham United,€74.50m,10,€4.24m,8,€-70.27m,2021
+12,Leicester City,Leicester City,€67.60m,11,€4.00m,11,€-63.60m,2021
+13,Norwich City,Norwich City,€63.55m,32,€38.40m,30,€-25.15m,2021
+14,Southampton FC,Southampton FC,€63.40m,10,€60.35m,14,€-3.05m,2021
+15,Leeds United,Leeds United,€59.30m,13,-,15,€-59.30m,2021
+16,Burnley FC,Burnley FC,€49.40m,8,€40.50m,6,€-8.90m,2021
+17,Watford FC,Watford FC,€43.50m,31,€12.85m,29,€-30.65m,2021
+18,Everton FC,Everton FC,€39.50m,13,€46.00m,15,€6.50m,2021
+19,Brentford FC,Brentford FC,€38.20m,19,€1.00m,15,€-37.20m,2021
+20,Wolverhampton Wanderers,Wolverhampton Wanderers,€37.60m,24,€31.80m,22,€-5.80m,2021
+1,Chelsea FC,Chelsea FC,€630.25m,28,€67.86m,25,€-562.39m,2022
+2,Manchester United,Manchester United,€243.15m,24,€23.65m,19,€-219.50m,2022
+3,Nottingham Forest,Nottingham Forest,€198.35m,42,€5.00m,26,€-193.35m,2022
+4,West Ham United,West Ham United,€196.60m,12,€21.55m,13,€-175.05m,2022
+5,Arsenal FC,Arsenal FC,€186.40m,25,€23.80m,18,€-162.60m,2022
+6,Newcastle United,Newcastle United,€185.00m,15,€14.06m,12,€-170.94m,2022
+7,Tottenham Hotspur,Tottenham Hotspur,€179.90m,15,€38.75m,14,€-141.15m,2022
+8,Wolverhampton Wanderers,Wolverhampton Wanderers,€179.51m,31,€64.87m,27,€-114.64m,2022
+9,Leeds United,Leeds United,€163.89m,24,€114.50m,19,€-49.39m,2022
+10,Manchester City,Manchester City,€155.00m,29,€162.17m,24,€7.17m,2022
+11,Southampton FC,Southampton FC,€154.21m,21,€5.50m,14,€-148.71m,2022
+12,Liverpool FC,Liverpool FC,€145.80m,11,€80.10m,13,€-65.70m,2022
+13,Aston Villa,Aston Villa,€113.00m,23,€54.00m,22,€-59.00m,2022
+14,AFC Bournemouth,AFC Bournemouth,€91.20m,17,-,13,€-91.20m,2022
+15,Everton FC,Everton FC,€83.07m,19,€103.60m,21,€20.53m,2022
+16,Fulham FC,Fulham FC,€76.10m,20,€25.40m,21,€-50.70m,2022
+17,Brighton & Hove Albion,Brighton & Hove Albion,€55.70m,21,€138.40m,23,€82.70m,2022
+18,Brentford FC,Brentford FC,€49.25m,23,€3.60m,21,€-45.65m,2022
+19,Leicester City,Leicester City,€49.00m,10,€81.40m,9,€32.40m,2022
+20,Crystal Palace,Crystal Palace,€46.60m,16,€5.46m,13,€-41.15m,2022
+1,Chelsea FC,Chelsea FC,€464.10m,30,€282.20m,32,€-181.90m,2023
+2,Tottenham Hotspur,Tottenham Hotspur,€272.10m,27,€120.70m,22,€-151.40m,2023
+3,Manchester City,Manchester City,€259.60m,19,€138.80m,21,€-120.80m,2023
+4,Arsenal FC,Arsenal FC,€235.10m,15,€69.20m,16,€-165.90m,2023
+5,Manchester United,Manchester United,€210.70m,16,€63.77m,24,€-146.93m,2023
+6,Liverpool FC,Liverpool FC,€172.00m,14,€60.70m,18,€-111.30m,2023
+7,Newcastle United,Newcastle United,€148.10m,16,€44.60m,15,€-103.50m,2023
+8,West Ham United,West Ham United,€144.56m,10,€172.86m,11,€28.30m,2023
+9,Nottingham Forest,Nottingham Forest,€131.63m,35,€82.82m,41,€-48.81m,2023
+10,AFC Bournemouth,AFC Bournemouth,€129.89m,23,€1.50m,21,€-128.39m,2023
+11,Aston Villa,Aston Villa,€111.50m,14,€33.16m,14,€-78.34m,2023
+12,Burnley FC,Burnley FC,€111.05m,30,€3.80m,22,€-107.25m,2023
+13,Brighton & Hove Albion,Brighton & Hove Albion,€106.85m,28,€189.00m,22,€82.15m,2023
+14,Wolverhampton Wanderers,Wolverhampton Wanderers,€94.00m,26,€169.20m,31,€75.20m,2023
+15,Fulham FC,Fulham FC,€73.17m,15,€53.20m,16,€-19.97m,2023
+16,Brentford FC,Brentford FC,€72.35m,19,€10.25m,16,€-62.10m,2023
+17,Crystal Palace,Crystal Palace,€67.80m,8,-,9,€-67.80m,2023
+18,Sheffield United,Sheffield United,€66.95m,18,€30.90m,15,€-36.05m,2023
+19,Everton FC,Everton FC,€40.50m,16,€82.80m,16,€42.30m,2023
+20,Luton Town,Luton Town,€25.90m,28,€300k,25,€-25.60m,2023
+1,Chelsea FC,Chelsea FC,€281.90m,32,€239.00m,32,€-42.90m,2024
+2,Brighton & Hove Albion,Brighton & Hove Albion,€281.45m,23,€49.99m,25,€-231.46m,2024
+3,Manchester United,Manchester United,€246.30m,18,€117.20m,19,€-129.10m,2024
+4,Manchester City,Manchester City,€243.00m,15,€141.70m,13,€-101.30m,2024
+5,Aston Villa,Aston Villa,€214.20m,20,€257.17m,25,€42.97m,2024
+6,Tottenham Hotspur,Tottenham Hotspur,€185.35m,17,€55.30m,17,€-130.05m,2024
+7,Ipswich Town,Ipswich Town,€152.59m,17,€2.36m,18,€-150.23m,2024
+8,West Ham United,West Ham United,€144.40m,18,€46.15m,15,€-98.25m,2024
+9,AFC Bournemouth,AFC Bournemouth,€134.90m,17,€66.09m,23,€-68.82m,2024
+10,Wolverhampton Wanderers,Wolverhampton Wanderers,€124.40m,23,€116.20m,16,€-8.21m,2024
+11,Southampton FC,Southampton FC,€123.05m,30,€41.59m,19,€-81.46m,2024
+12,Arsenal FC,Arsenal FC,€108.90m,10,€83.79m,13,€-25.11m,2024
+13,Nottingham Forest,Nottingham Forest,€105.50m,26,€86.70m,32,€-18.80m,2024
+14,Brentford FC,Brentford FC,€98.40m,14,€74.50m,18,€-23.90m,2024
+15,Crystal Palace,Crystal Palace,€91.90m,18,€100.70m,18,€8.80m,2024
+16,Fulham FC,Fulham FC,€91.55m,14,€68.80m,13,€-22.75m,2024
+17,Leicester City,Leicester City,€91.05m,14,€47.25m,13,€-43.80m,2024
+18,Newcastle United,Newcastle United,€68.20m,11,€89.55m,16,€21.35m,2024
+19,Everton FC,Everton FC,€50.20m,11,€84.15m,12,€33.95m,2024
+20,Liverpool FC,Liverpool FC,€42.00m,12,€47.00m,15,€5.00m,2024
+1,Liverpool FC,Liverpool FC,€339.68m,15,€219.50m,10,€-120.18m,2025
+2,Arsenal FC,Arsenal FC,€293.50m,14,€8.00m,9,€-285.50m,2025
+3,Chelsea FC,Chelsea FC,€279.65m,23,€276.45m,19,€-3.20m,2025
+4,Manchester United,Manchester United,€229.70m,12,-,7,€-229.70m,2025
+5,Manchester City,Manchester City,€176.90m,15,€58.50m,11,€-118.40m,2025
+6,Nottingham Forest,Nottingham Forest,€174.90m,16,€124.40m,13,€-50.50m,2025
+7,Sunderland AFC,Sunderland AFC,€165.00m,21,€51.00m,9,€-114.00m,2025
+8,Newcastle United,Newcastle United,€146.15m,10,€31.00m,10,€-115.15m,2025
+9,Tottenham Hotspur,Tottenham Hotspur,€145.60m,13,€35.50m,12,€-110.10m,2025
+10,Everton FC,Everton FC,€127.75m,13,€4.00m,14,€-123.75m,2025
+11,Burnley FC,Burnley FC,€125.65m,21,€35.00m,17,€-90.65m,2025
+12,AFC Bournemouth,AFC Bournemouth,€121.60m,16,€237.06m,14,€115.46m,2025
+13,Leeds United,Leeds United,€113.70m,16,€8.00m,10,€-105.70m,2025
+14,Brentford FC,Brentford FC,€98.70m,14,€97.60m,11,€-1.10m,2025
+15,Wolverhampton Wanderers,Wolverhampton Wanderers,€98.50m,12,€115.00m,16,€16.50m,2025
+16,West Ham United,West Ham United,€82.80m,15,€65.80m,12,€-17.00m,2025
+17,Brighton & Hove Albion,Brighton & Hove Albion,€80.00m,23,€121.70m,15,€41.70m,2025
+18,Aston Villa,Aston Villa,€37.00m,15,€55.15m,17,€18.15m,2025
+19,Crystal Palace,Crystal Palace,€2.30m,13,€69.30m,12,€67.00m,2025
+20,Fulham FC,Fulham FC,€500k,2,-,5,€-500k,2025
