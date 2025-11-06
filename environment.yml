@@ -1,7 +1,6 @@
-name: model-comparison
+name: prem-env
 channels:
   - conda-forge
-  - khiops
 dependencies:
   - python=3.10
   - numpy
@@ -9,6 +8,5 @@ dependencies:
   - scikit-learn
   - xgboost
   - lightgbm
-  - khiops
   - jupyter
   - matplotlib
