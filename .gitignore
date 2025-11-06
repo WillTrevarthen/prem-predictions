@@ -1,0 +1,14 @@
+# Data files
+*.csv
+*.pkl
+*.pickle
+*.xls
+*.xlsx
+
+# Optional: ignore temporary or backup files
+~$*
+*.bak
+*.tmp
+
+# (Optional) if you use Jupyter or data experiments:
+.ipynb_checkpoints/

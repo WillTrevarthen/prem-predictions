@@ -1,0 +1,14 @@
+name: model-comparison
+channels:
+  - conda-forge
+  - khiops
+dependencies:
+  - python=3.10
+  - numpy
+  - pandas
+  - scikit-learn
+  - xgboost
+  - lightgbm
+  - khiops
+  - jupyter
+  - matplotlib
