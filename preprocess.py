@@ -783,7 +783,7 @@ def main():
     df = df.iloc[:, :24]
     # df['data_type'] = 'Training'
     # Loadng Inference Data to be pipelined as well
-    inference_df = pd.read_csv('epl-2025-GMTStandardTime.csv')
+    inference_df = pd.read_csv('sup data/epl-2025-GMTStandardTime.csv')
     # Split into new columns
     inference_df[['Date', 'Time']] = inference_df['Date'].str.split(
         ' ', expand=True)
@@ -792,10 +792,10 @@ def main():
     # inference_df['data_type'] = 'Inference'
     inference_df = inference_df.rename(
         columns={'Home Team': 'HomeTeam', 'Away Team': 'AwayTeam'})
-    inference_df.to_csv('inference.csv', index=False)
+    # inference_df.to_csv('inference.csv', index=False)
 
     df = pd.concat([df, inference_df], ignore_index=True)
-    df.to_csv('combined_dataset.csv', index=False)
+    # df.to_csv('combined_dataset.csv', index=False)
 
     team_mapping = {
         'Arsenal FC': 'Arsenal',
@@ -851,7 +851,7 @@ def main():
         (df['year'] - 1)
     )
 
-    xG_data = pd.read_csv('clean_xg.csv')
+    xG_data = pd.read_csv('sup data/clean_xg.csv')
     xG_data['Date'] = pd.to_datetime(xG_data['Date'], dayfirst=True, errors='coerce')
 
     # Perform a left join
@@ -983,7 +983,7 @@ def main():
     df = previous_season_total_goals(df)
     df = add_cumulative_points(df)
 
-    transfers = pd.read_csv('transfer_data_cleaned.csv')
+    transfers = pd.read_csv('sup data/transfer_data_cleaned.csv')
     # Merge home team data
     df = df.merge(
         transfers, how='left', left_on=['HomeTeam', 'season_start'], right_on=['Club', 'season_start'],
@@ -1094,11 +1094,11 @@ def main():
         ], axis=1, inplace=True
     )
 
-    df.to_csv('test.csv', index=False)
+    # df.to_csv('test.csv', index=False)
     inference_df = df[df['data_type'] == 'Inference']
     training_df = df[df['data_type'] == 'Training']
 
-    inference_df.to_csv('inference2.csv', index=False)
+    inference_df.to_csv('inference.csv', index=False)
     training_df.to_csv('training.csv', index=False)
     # print(df.head(-5))
 
