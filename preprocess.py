@@ -12,7 +12,7 @@ import pickle
 
 def collate_data():
     # Define the folder path containing the CSV files
-    folder_path = 'premier league/data'
+    folder_path = '/Users/willtrevarthen/prem-predictions/data'
 
     # Use glob to find all CSV files in the folder
     csv_files = glob.glob(os.path.join(folder_path, '*.csv'))
@@ -778,15 +778,28 @@ def add_head_to_head_lastN(df, N=8, season_col="season_start",
     return df
 
 
+def add_gameweek(df):
+    # Convert Date to datetime if it's not already
+    df['Date'] = pd.to_datetime(df['Date'])
+    
+    # Sort by date
+    df = df.sort_values('Date')
+    
+    # Group by season and create gameweek numbers
+    df['gameweek'] = df.groupby('season_start').cumcount() // 10 + 1
+    
+    return df
+
 def main():
     df = collate_data()
     df = df.iloc[:, :24]
     # df['data_type'] = 'Training'
-    # Loadng Inference Data to be pipelined as well
+    # Loading Inference Data to be pipelined as well
     inference_df = pd.read_csv('sup data/epl-2025-GMTStandardTime.csv')
     # Split into new columns
-    inference_df[['Date', 'Time']] = inference_df['Date'].str.split(
-        ' ', expand=True)
+    inference_df[['Date', 'Time']] = inference_df['Date'].str.split(' ', expand=True)
+    
+
     inference_df = inference_df[[
         'Date', 'Time', 'Home Team', 'Away Team', 'FTR', 'FTHG', 'FTAG']]
     # inference_df['data_type'] = 'Inference'
@@ -851,22 +864,38 @@ def main():
         (df['year'] - 1)
     )
 
+    df = add_gameweek(df)
+    # df['gameweek'] = df['gameweek'].astype(str)
+
+
     xG_data = pd.read_csv('sup data/clean_xg.csv')
     xG_data['Date'] = pd.to_datetime(xG_data['Date'], dayfirst=True, errors='coerce')
+    xG_data['month'] = xG_data['Date'].dt.month
+    xG_data['year'] = xG_data['Date'].dt.year
+    xG_data['day'] = xG_data['Date'].dt.dayofweek
+
+    xG_data['season_start'] = np.where(
+        xG_data['month'] > 6,
+        xG_data['year'],
+        (xG_data['year'] - 1)
+    ).astype(float)
+    # Gets rid of that bleddy row limit issue
+    # xG_data = xG_data.loc[:224,:]
+    xG_data['Wk'] = xG_data['Wk'].astype(float, errors='ignore')
 
     # Perform a left join
     df= df.merge(
-        xG_data[['Date', 'Home', 'Away', 'Home xG', 'Away xG']],
-        left_on=['Date', 'HomeTeam', 'AwayTeam'],
-        right_on=['Date', 'Home', 'Away'],
+        xG_data[['Wk','season_start','Home', 'Away', 'Home xG', 'Away xG']],
+        left_on=['season_start','gameweek', 'HomeTeam', 'AwayTeam'],
+        right_on=['season_start','Wk', 'Home', 'Away'],
         how='left'
     )
 
     # Drop redundant columns
-    df = df.drop(columns=['Home', 'Away'])
+    df = df.drop(columns=['Home', 'Away','Wk'])
 
     df = impute_xg(df)
-    # print(df.head())
+    df.to_csv('test.csv')
 
     target_cols = df.columns[11:23]
 
