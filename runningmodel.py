@@ -111,11 +111,31 @@ def simulate_season_predictions(df, model, feature_cols, result_encoder=None,
 
     return df
 
+def pretty_print_table(table):
+    """
+    Print a nicely formatted league table showing team and points
+    """
+    # Select and rename columns for display
+    display_table = table[['team', 'total_points']].copy()
+    
+    # Add position column
+    display_table.index = range(1, len(display_table) + 1)
+    
+    # Format the table
+    print("\nPredicted League Table:")
+    print("=" * 40)
+    print(f"{'Pos':4} {'Team':25} {'Pts':>5}")
+    print("-" * 40)
+    
+    for pos, row in display_table.iterrows():
+        print(f"{pos:3}. {row['team']:25} {int(row['total_points']):>5}")
+    print("=" * 40)
+
 
 def main():
 
     # Load processed inference
-    inference_df = pd.read_csv('inference2.csv')
+    inference_df = pd.read_csv('inference.csv')
     inference_df = inference_df.drop(
         columns=['data_type', 'ft_result_encoded'])
     # Load model + encoders
@@ -154,7 +174,7 @@ def main():
 
     pred_df_clean = pred_df[['Date', 'HomeTeam', 'AwayTeam', 'predicted_FTR', 'predicted_confidence']]
 
-    pred_df_clean.to_csv('results/GW2 results/season_predictions.csv', index=False)
+    pred_df_clean.to_csv('results/GW11 results/season_predictions.csv', index=False)
     print(pred_df[['home_team_encoded', 'away_team_encoded',
           'home_points_cum', 'away_points_cum', 'predicted_FTR']].head())
 
@@ -212,8 +232,12 @@ def main():
     # Sort descending by total points
     table = table.sort_values(
         'total_points', ascending=False).reset_index(drop=True)
-    table.to_csv('results/GW2 results/predicted_table.csv', index=False)
+    table.to_csv('results/GW11 results/predicted_table.csv', index=False)
 
+    # Pretty print the table
+    pretty_print_table(table)
+    
 
 if __name__ == '__main__':
     main()
+
