@@ -1,13 +1,7 @@
 import pandas as pd
 
 if __name__ == '__main__':
-    df = pd.read_csv('sup data/xgpermatch.csv')
-
-    df = df[df['Home xG'] != 'xG']
-    df = df.reset_index(drop=True)
-
-    print(df.head())
-
+    df = pd.read_csv('sup data/fbref_team_season_schedule_with_xg.csv')
     team_mapping = {
         'Arsenal FC': 'Arsenal',
         'Aston Villa': 'Aston Villa',
@@ -54,8 +48,22 @@ if __name__ == '__main__':
         'Man Utd': 'Man United'
     }
 
-    df['Date'] = pd.to_datetime(df['Date'], dayfirst=True)
+    df['date'] = pd.to_datetime(df['date'])
 
-    df['Home'] = df['Home'].map(team_mapping).fillna(df['Home'])
-    df['Away'] = df['Away'].map(team_mapping).fillna(df['Away'])
+    df['home_team'] = df['home_team'].map(team_mapping).fillna(df['home_team'])
+    df['away_team'] = df['away_team'].map(team_mapping).fillna(df['away_team'])
+
+    df["score"] = df["score"].astype(str)
+
+    df["score"] = (
+        df["score"]
+        .str.replace("‚Äì", "-", regex=False) 
+        .str.replace("–", "-", regex=False)   
+    )
+
+    df[["home_goals", "away_goals"]] = (
+        df["score"].str.extract(r"(\d+)-(\d+)").astype('Int64')
+    )
+
+    
     df.to_csv('sup data/clean_xg.csv', index=False)

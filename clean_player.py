@@ -61,7 +61,7 @@ def flatten_col(col):
         return col              # already a simple string
 
 
-def simplify_pos(pos: str) -> str:                                          #function to simplify player positions into main categories              
+def simplify_pos(pos: str) -> str: #function to simplify player positions into main categories              
     if not pos or pd.isna(pos):
         return "Unknown"
 
@@ -69,7 +69,7 @@ def simplify_pos(pos: str) -> str:                                          #fun
     roles = pos.split(",")
 
     # Define role priority (defensive first)
-    priority = ["GK", "DF", "MF", "FW"]                                     #list of roles in order of priority
+    priority = ["GK", "DF", "MF", "FW"]    #list of roles in order of priority
 
     for r in priority:
         if r in roles:

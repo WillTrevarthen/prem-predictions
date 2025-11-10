@@ -777,7 +777,6 @@ def add_head_to_head_lastN(df, N=8, season_col="season_start",
 
     return df
 
-
 def add_gameweek(df):
     # Convert Date to datetime if it's not already
     df['Date'] = pd.to_datetime(df['Date'])
@@ -791,14 +790,15 @@ def add_gameweek(df):
     return df
 
 def main():
-    df = collate_data()
+    df = pd.read_csv("sup data/all_seasons_data.csv")
     df = df.iloc[:, :24]
     # df['data_type'] = 'Training'
     # Loading Inference Data to be pipelined as well
-    inference_df = pd.read_csv('sup data/epl-2025-GMTStandardTime.csv')
-    # Split into new columns
-    inference_df[['Date', 'Time']] = inference_df['Date'].str.split(' ', expand=True)
+    # inference_df = pd.read_csv('sup data/epl-2025-GMTStandardTime.csv')
+    # # Split into new columns
+    # inference_df[['Date', 'Time']] = inference_df['Date'].str.split(' ', expand=True)
     
+    xg_data = pd.read_csv('sup data/fbref_team_season_schedule_with_xg.csv')
 
     inference_df = inference_df[[
         'Date', 'Time', 'Home Team', 'Away Team', 'FTR', 'FTHG', 'FTAG']]
