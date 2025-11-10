@@ -105,18 +105,34 @@ def get_fbref_table(
 
 # Example usage:
 if __name__ == "__main__":
-    # Fetch Premier League data for the 2024-25 season from football-data.co.uk
-    df_football_data = get_football_data("2425", "E0")
-    print("Football-Data.co.uk Premier League 2024-25 Data:")
-    print(df_football_data.head())
+    # Fetch Premier League data for the all seasons 2011-2025 from football-data.co.uk
+    all_seasons = []
+    for season in range(2011, 2026):  # inclusive of 2025
+        season_str = f"{str(season)[-2:]}{str(season + 1)[-2:]}"  # e.g. "2425"
+        print(f"Fetching Football-Data for {season}-{season + 1}...")
+        df_football_data = get_football_data(season_str, "E0")
+        all_seasons.append(df_football_data)
 
-    # Fetch the first table from the FBref Premier League stats page
-    df_fbref = get_fbref_table(
-        league="ENG-Premier League",
-        season=2024,
-        scope="team_season",
-        stat_type="standard",
-    )
-    print("\nFBref Premier League Stats Table:")
-    print(df_fbref.head())
+    df_football_data = pd.concat(all_seasons, ignore_index=True)        
+    df_football_data.to_csv(f"sup data/all_seasons_data.csv", index=False)
+
+    # Fetch all seasons from FBref and save csv
+    all_seasons = []
+    for season in range(2015, 2026):  # inclusive of 2025
+        print(f"Fetching data for {season} season...")
+        try:
+            df = get_fbref_table(
+                league="ENG-Premier League",
+                season=season,
+                scope="player_season",
+                stat_type="standard",
+            )
+            df["season"] = season  # add season column
+            all_seasons.append(df)
+        except Exception as e:
+            print(f"⚠️  Skipping {season} due to error: {e}")
+
+    # Combine all into one DataFrame
+    current = pd.concat(all_seasons, ignore_index=False)
+    current.to_csv("sup data/fbref_player_season_stats_2015-2025.csv", index=False)
 
