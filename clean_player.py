@@ -1,90 +1,8 @@
 import numpy as np
 import pandas as pd
-from getdata import get_fbref_table                                         #import the function to get FBref data
-
-all_seasons = []
-
-for season in range(2015, 2026):  # inclusive of 2025
-    print(f"Fetching data for {season} season...")
-    try:
-        df = get_fbref_table(
-            league="ENG-Premier League",
-            season=season,
-            scope="player_season",
-            stat_type="standard",
-        )
-        df["season"] = season  # add season column
-        all_seasons.append(df)
-    except Exception as e:
-        print(f"⚠️  Skipping {season} due to error: {e}")
-
-# Combine all into one DataFrame
-current = pd.concat(all_seasons, ignore_index=False)
-
-def simplify_pos(pos: str) -> str:                                          #function to simplify player positions into main categories              
-    if not pos or pd.isna(pos):
-        return "Unknown"
-
-    pos = pos.upper().replace(" ", "")
-    roles = pos.split(",")
-
-    # Define role priority (defensive first)
-    priority = ["GK", "DF", "MF", "FW"]                                     #list of roles in order of priority
-
-    for r in priority:
-        if r in roles:
-            return {"GK": "GK", "DF": "DEF", "MF": "MID", "FW": "ATT"}[r]
-
-    return "Unknown"
-
-current["RoleGroup"] = current["pos"].apply(simplify_pos)
-
-playing_time_chosen_stats = ['MP', 'Min', '90s']
-progression_chosen_stats = ['PrgC', 'PrgP', 'PrgR']
-
-# Get all second-level column names under "Per 90 Minutes"
-per90_stats = list(current['Per 90 Minutes'].columns)
-
-chosen_stats = (
-    [('Playing Time', stat) for stat in playing_time_chosen_stats] +
-    [('Progression', stat) for stat in progression_chosen_stats] +
-    [('Per 90 Minutes', stat) for stat in per90_stats]
-)
-
-# Start from your stats subset
-current_subset = current[chosen_stats + [('RoleGroup', '')]].copy()
-
-current_subset = current_subset.reset_index()
-
-def flatten_col(col):
-    if isinstance(col, tuple):
-        top, sub = col
-        if sub != '':
-            return sub          # use second level: 'Min', 'Gls', 'xG', ...
-        else:
-            return top          # use first level when second is empty: 'nation', 'RoleGroup'
-    else:
-        return col              # already a simple string
-
-current_subset.columns = [flatten_col(c) for c in current_subset.columns]
-
-current_subset['PrgC_per90'] = np.where(
-    current_subset['90s'] > 0,
-    current_subset['PrgC'] / current_subset['90s'],
-    0
-)
-
-current_subset['PrgP_per90'] = np.where(
-    current_subset['90s'] > 0,
-    current_subset['PrgP'] / current_subset['90s'],
-    0
-)
-
-current_subset['PrgR_per90'] = np.where(
-    current_subset['90s'] > 0,
-    current_subset['PrgR'] / current_subset['90s'],
-    0
-)
+from getdata import get_fbref_table               #import the function to get FBref data       
+from sklearn.decomposition import PCA
+from sklearn.impute import SimpleImputer
 
 def minute_weighted_group_aggregate(
     df: pd.DataFrame,
@@ -131,84 +49,155 @@ def minute_weighted_group_aggregate(
     grouped = df.groupby(list(group_cols), dropna=False).apply(agg_func).reset_index()
     return grouped
 
-grouped_stats = minute_weighted_group_aggregate(current_subset)
-grouped_stats = grouped_stats[grouped_stats['RoleGroup']!='GK']
-grouped_stats = grouped_stats.drop(columns=['Min', 'MP', '90s'])
 
-id_cols = ['season', 'team']
-value_cols = [c for c in grouped_stats.columns if c not in id_cols + ['RoleGroup']]
+def flatten_col(col):
+    if isinstance(col, tuple):
+        top, sub = col
+        if sub != '':
+            return sub          # use second level: 'Min', 'Gls', 'xG', ...
+        else:
+            return top          # use first level when second is empty: 'nation', 'RoleGroup'
+    else:
+        return col              # already a simple string
 
-wide = (
-    grouped_stats
-    .set_index(id_cols + ['RoleGroup'])[value_cols]
-    .unstack('RoleGroup')
-)
 
-wide.columns = [f"{stat}_{role}" for stat, role in wide.columns]
-grouped_stats_wide = wide.reset_index()
+def simplify_pos(pos: str) -> str:                                          #function to simplify player positions into main categories              
+    if not pos or pd.isna(pos):
+        return "Unknown"
 
-team_mapping = {
-        'Arsenal FC': 'Arsenal',
-        'Aston Villa': 'Aston Villa',
-        'AFC Bournemouth': 'Bournemouth',
-        'Brentford FC': 'Brentford',
-        'Brighton & Hove Albion': 'Brighton',
-        'Burnley FC': 'Burnley',
-        'Cardiff City': 'Cardiff',
-        'Chelsea FC': 'Chelsea',
-        'Crystal Palace': 'Crystal Palace',
-        'Everton FC': 'Everton',
-        'Fulham FC': 'Fulham',
-        'Huddersfield Town': 'Huddersfield',
-        'Hull City': 'Hull',
-        'Ipswich Town': 'Ipswich',
-        'Leeds United': 'Leeds',
-        'Leeds Utd': 'Leeds',
-        'Leicester City': 'Leicester',
-        'Liverpool FC': 'Liverpool',
-        'Manchester City': 'Man City',
-        'Manchester United': 'Man United',
-        'Manchester Utd': 'Man United',
-        'Middlesbrough FC': 'Middlesbrough',
-        'Newcastle United': 'Newcastle',
-        'Newcastle Utd': 'Newcastle',
-        'Norwich City': 'Norwich',
-        'Southampton FC': 'Southampton',
-        'Swansea City': 'Swansea',
-        'Stoke City': 'Stoke',
-        'Sunderland AFC': 'Sunderland',
-        'Sheffield Utd': 'Sheffield United',
-        'Tottenham Hotspur': 'Tottenham',
-        'Watford FC': 'Watford',
-        'West Bromwich Albion': 'West Brom',
-        'West Ham United': 'West Ham',
-        'West Ham Utd': 'West Ham',
-        'Wolverhampton Wanderers': 'Wolves',
-        'Nottingham Forest': "Nott'm Forest",
-        "Nott'ham Forest": "Nott'm Forest",
-        'Luton Town': 'Luton',
-        'Ipswich Town': 'Ipswich',
-        'Fulham FC': 'Fulham',
-        'Spurs': 'Tottenham',
-        'Man Utd': 'Man United'
-    }
+    pos = pos.upper().replace(" ", "")
+    roles = pos.split(",")
 
-grouped_stats_wide['team'] = grouped_stats_wide['team'].map(team_mapping).fillna(grouped_stats_wide['team'])
+    # Define role priority (defensive first)
+    priority = ["GK", "DF", "MF", "FW"]                                     #list of roles in order of priority
 
-grouped_stats_wide = grouped_stats_wide.replace([pd.NA, pd.NaT, float('inf'), float('-inf')], np.nan)
+    for r in priority:
+        if r in roles:
+            return {"GK": "GK", "DF": "DEF", "MF": "MID", "FW": "ATT"}[r]
 
-from sklearn.decomposition import PCA
-from sklearn.impute import SimpleImputer
+    return "Unknown"
 
-imputer = SimpleImputer(strategy='median')
-grouped_stats_wide.iloc[:, 2:] = imputer.fit_transform(grouped_stats_wide.iloc[:, 2:])
 
-pca = PCA(n_components=15, random_state=42)
-features = grouped_stats_wide.drop(columns=['season', 'team'])
-pca_components = pca.fit_transform(features)
-pca_df = pd.DataFrame(pca_components, columns=[f'PC{i+1}' for i in range(pca.n_components_)])
-final_df = pd.concat([grouped_stats_wide[['season', 'team']].reset_index(drop=True), pca_df], axis=1)
-print("")
+if __name__ == '__main__':
+
+
+    current = pd.read_csv('sup data/fbref_player_season_stats_2015-2025.csv')
+
+    current["RoleGroup"] = current["pos"].apply(simplify_pos)
+
+    playing_time_chosen_stats = ['MP', 'Min', '90s']
+    progression_chosen_stats = ['PrgC', 'PrgP', 'PrgR']
+
+    # Get all second-level column names under "Per 90 Minutes"
+    per90_stats = list(current['Per 90 Minutes'].columns)
+
+    chosen_stats = (
+        [('Playing Time', stat) for stat in playing_time_chosen_stats] +
+        [('Progression', stat) for stat in progression_chosen_stats] +
+        [('Per 90 Minutes', stat) for stat in per90_stats]
+    )
+
+    # Start from your stats subset
+    current_subset = current[chosen_stats + [('RoleGroup', '')]].copy()
+
+    current_subset = current_subset.reset_index()
+
+
+    current_subset.columns = [flatten_col(c) for c in current_subset.columns]
+
+    current_subset['PrgC_per90'] = np.where(
+        current_subset['90s'] > 0,
+        current_subset['PrgC'] / current_subset['90s'],
+        0
+    )
+
+    current_subset['PrgP_per90'] = np.where(
+        current_subset['90s'] > 0,
+        current_subset['PrgP'] / current_subset['90s'],
+        0
+    )
+
+    current_subset['PrgR_per90'] = np.where(
+        current_subset['90s'] > 0,
+        current_subset['PrgR'] / current_subset['90s'],
+        0
+    )
+
+    grouped_stats = minute_weighted_group_aggregate(current_subset)
+    grouped_stats = grouped_stats[grouped_stats['RoleGroup']!='GK']
+    grouped_stats = grouped_stats.drop(columns=['Min', 'MP', '90s'])
+
+    id_cols = ['season', 'team']
+    value_cols = [c for c in grouped_stats.columns if c not in id_cols + ['RoleGroup']]
+
+    wide = (
+        grouped_stats
+        .set_index(id_cols + ['RoleGroup'])[value_cols]
+        .unstack('RoleGroup')
+    )
+
+    wide.columns = [f"{stat}_{role}" for stat, role in wide.columns]
+    grouped_stats_wide = wide.reset_index()
+
+    team_mapping = {
+            'Arsenal FC': 'Arsenal',
+            'Aston Villa': 'Aston Villa',
+            'AFC Bournemouth': 'Bournemouth',
+            'Brentford FC': 'Brentford',
+            'Brighton & Hove Albion': 'Brighton',
+            'Burnley FC': 'Burnley',
+            'Cardiff City': 'Cardiff',
+            'Chelsea FC': 'Chelsea',
+            'Crystal Palace': 'Crystal Palace',
+            'Everton FC': 'Everton',
+            'Fulham FC': 'Fulham',
+            'Huddersfield Town': 'Huddersfield',
+            'Hull City': 'Hull',
+            'Ipswich Town': 'Ipswich',
+            'Leeds United': 'Leeds',
+            'Leeds Utd': 'Leeds',
+            'Leicester City': 'Leicester',
+            'Liverpool FC': 'Liverpool',
+            'Manchester City': 'Man City',
+            'Manchester United': 'Man United',
+            'Manchester Utd': 'Man United',
+            'Middlesbrough FC': 'Middlesbrough',
+            'Newcastle United': 'Newcastle',
+            'Newcastle Utd': 'Newcastle',
+            'Norwich City': 'Norwich',
+            'Southampton FC': 'Southampton',
+            'Swansea City': 'Swansea',
+            'Stoke City': 'Stoke',
+            'Sunderland AFC': 'Sunderland',
+            'Sheffield Utd': 'Sheffield United',
+            'Tottenham Hotspur': 'Tottenham',
+            'Watford FC': 'Watford',
+            'West Bromwich Albion': 'West Brom',
+            'West Ham United': 'West Ham',
+            'West Ham Utd': 'West Ham',
+            'Wolverhampton Wanderers': 'Wolves',
+            'Nottingham Forest': "Nott'm Forest",
+            "Nott'ham Forest": "Nott'm Forest",
+            'Luton Town': 'Luton',
+            'Ipswich Town': 'Ipswich',
+            'Fulham FC': 'Fulham',
+            'Spurs': 'Tottenham',
+            'Man Utd': 'Man United'
+        }
+
+    grouped_stats_wide['team'] = grouped_stats_wide['team'].map(team_mapping).fillna(grouped_stats_wide['team'])
+
+    grouped_stats_wide = grouped_stats_wide.replace([pd.NA, pd.NaT, float('inf'), float('-inf')], np.nan)
+
+    imputer = SimpleImputer(strategy='median')
+    grouped_stats_wide.iloc[:, 2:] = imputer.fit_transform(grouped_stats_wide.iloc[:, 2:])
+
+    pca = PCA(n_components=15, random_state=42)
+    features = grouped_stats_wide.drop(columns=['season', 'team'])
+    pca_components = pca.fit_transform(features)
+    pca_df = pd.DataFrame(pca_components, columns=[f'PC{i+1}' for i in range(pca.n_components_)])
+    final_df = pd.concat([grouped_stats_wide[['season', 'team']].reset_index(drop=True), pca_df], axis=1)
+    final_df.to_csv('cleaned_player_stats.csv', index=False)
 
 
 
