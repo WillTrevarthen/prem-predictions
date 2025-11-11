@@ -382,6 +382,8 @@ def main():
         rf_model = pickle.load(f)
     with open("xgb_model.pkl", "rb") as f:
         xgb_model = pickle.load(f)
+    with open("calibrated_xgb_model.pkl", "rb") as f:
+        calibrated_xgb = pickle.load(f)
     with open("pipeline.pkl", "rb") as f:
         pipeline = pickle.load(f)
 
@@ -399,12 +401,12 @@ def main():
     # --- Simulate remaining fixtures (inference) ---
     pred_df = simulate_season_predictions(
         inference_df,
-        xgb_model,
+        calibrated_xgb, #xgb_model
         feature_cols,
         result_encoder=result_encoder,
         date_col="Date",
         training_df=train,
-        h2h_N=5,
+        h2h_N=5
     )
 
     # Decode team names
@@ -437,6 +439,8 @@ def main():
             "prob_away_win",
         ]
     ]
+
+    pred_df_clean['predicted_confidence'] = np.round(pred_df_clean['predicted_confidence'],2)
 
     pred_df_clean.to_csv(
         "results/GW12 results/season_predictions.csv", index=False
