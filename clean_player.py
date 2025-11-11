@@ -208,10 +208,11 @@ if __name__ == "__main__":
 
     imputer = SimpleImputer(strategy='median')
     grouped_stats_wide.iloc[:, 2:] = imputer.fit_transform(grouped_stats_wide.iloc[:, 2:])
+    grouped_stats_wide.to_csv('sup data/cleaned_player_stats.csv', index=False)
 
-    pca = PCA(n_components=15, random_state=42)
-    features = grouped_stats_wide.drop(columns=['season', 'team'])
-    pca_components = pca.fit_transform(features)
-    pca_df = pd.DataFrame(pca_components, columns=[f'PC{i+1}' for i in range(pca.n_components_)])
-    final_df = pd.concat([grouped_stats_wide[['season', 'team']].reset_index(drop=True), pca_df], axis=1)
-    final_df.to_csv('sup data/cleaned_player_stats.csv', index=False)
+    # pca = PCA(n_components=15, random_state=42)
+    # features = grouped_stats_wide.drop(columns=['season', 'team'])
+    # pca_components = pca.fit_transform(features)
+    # pca_df = pd.DataFrame(pca_components, columns=[f'PC{i+1}' for i in range(pca.n_components_)])
+    # final_df = pd.concat([grouped_stats_wide[['season', 'team']].reset_index(drop=True), pca_df], axis=1)
+    # final_df.to_csv('sup data/cleaned_player_stats.csv', index=False)

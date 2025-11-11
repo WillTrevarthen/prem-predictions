@@ -10,65 +10,13 @@ from sklearn.utils.class_weight import compute_class_weight
 from sklearn.ensemble import RandomForestClassifier
 
 def main():
-    # df = pd.read_csv('training.csv')
-    # df = df.drop(columns=['data_type', 'Date'])
-
-    # X = df.drop(columns=['ft_result_encoded'])
-    # y = df['ft_result_encoded']
-
-    # X_train, X_test, y_train, y_test = train_test_split(
-    #     X, y, test_size=0.2, random_state=42, stratify=y
-    # )
-
-    # # Compute class weights
-    # classes = np.unique(y_train)
-    # class_weights = compute_class_weight(class_weight='balanced', classes=classes, y=y_train)
-    # weight_dict = {c: w for c, w in zip(classes, class_weights)}
-
-    # # Map weights to each sample
-    # sample_weights = y_train.map(weight_dict)
-
-    # # Initialize XGBoost
-    # xgb = XGBClassifier(
-    #     n_estimators=100, #200
-    #     max_depth=3, #5
-    #     num_class=len(classes),
-    #     min_child_weight=5, #1
-    #     gamma = 0.1, #0.3
-    #     learning_rate=0.01,
-    #     subsample=0.6,
-    #     colsample_bytree=0.6, #0.8
-    #     random_state=42,
-    #     n_jobs=-1,
-    #     use_label_encoder=False,
-    #     eval_metric="mlogloss"
-    # )
-
-    # # Train
-    # xgb.fit(X_train, y_train, sample_weight=sample_weights)
-
-    # # Predict
-    # y_pred = xgb.predict(X_test)
-
-    # # Evaluate
-    # accuracy = accuracy_score(y_test, y_pred)
-    # print(f"Accuracy: {accuracy:.4f}\n")
-    # print("Classification Report:")
-    # print(classification_report(y_test, y_pred))
-    # print("Confusion Matrix:")
-    # print(confusion_matrix(y_test, y_pred))
-
-    # # Save model
-    # with open("xgb_model.pkl", "wb") as f:
-    #     pickle.dump(xgb, f)
-
-    # Load dataset
     df = pd.read_csv('training.csv')
-    # Sort by season and date to maintain chronological order
     df = df.sort_values(['season_start', 'Date'])
 
-
     df = df.drop(columns=['data_type', 'Date'])
+
+    X = df.drop(columns=['ft_result_encoded'])
+    y = df['ft_result_encoded']
 
     # Define how many most recent matches to use as test set
     n_test = 100
@@ -77,14 +25,59 @@ def main():
     train_df = df.iloc[:-n_test]
     test_df = df.iloc[-n_test:]
 
-    X = df.drop(columns=['ft_result_encoded'])
-    y = df['ft_result_encoded']
-
     X_train = train_df.drop(columns=['ft_result_encoded'])
     y_train = train_df['ft_result_encoded']
 
     X_test = test_df.drop(columns=['ft_result_encoded'])
     y_test = test_df['ft_result_encoded']
+    # Compute class weights
+    classes = np.unique(y_train)
+    class_weights = compute_class_weight(class_weight='balanced', classes=classes, y=y_train)
+    weight_dict = {c: w for c, w in zip(classes, class_weights)}
+
+    # Map weights to each sample
+    sample_weights = y_train.map(weight_dict)
+
+    # Initialize XGBoost
+    xgb = XGBClassifier(
+        objective="multi:softmax",
+        n_estimators=100, #200
+        max_depth=3, #5
+        num_class=len(classes),
+        min_child_weight=5, #1
+        gamma = 0.3, #0.3
+        learning_rate=0.01,
+        subsample=0.6,
+        colsample_bytree=0.8, #0.8
+        random_state=42,
+        n_jobs=-1,
+        use_label_encoder=False,
+        eval_metric="mlogloss"
+    )
+
+    # Train
+    xgb.fit(X_train, y_train, sample_weight=sample_weights)
+
+    # Predict
+    y_pred = xgb.predict(X_test)
+
+    # Evaluate
+    accuracy = accuracy_score(y_test, y_pred)
+    print(f"Accuracy: {accuracy:.4f}\n")
+    print("Classification Report:")
+    print(classification_report(y_test, y_pred))
+    print("Confusion Matrix:")
+    print(confusion_matrix(y_test, y_pred))
+
+    xgb.fit(X,y)
+
+    # Save model
+    with open("xgb_model.pkl", "wb") as f:
+        pickle.dump(xgb, f)
+
+    # Load dataset
+    # df = pd.read_csv('training.csv')
+    # Sort by season and date to maintain chronological order
 
     # Initialize Random Forest with balanced class weights
     rf = RandomForestClassifier(
@@ -93,7 +86,7 @@ def main():
         max_features='sqrt',
         min_samples_split=8,      # start here for your imbalance
         min_samples_leaf=3,       # optional, also helps minority class
-        class_weight= {0:1, 1:6, 2:1},  
+        class_weight= {0:1, 1:4, 2:1},  
         random_state=42,
         n_jobs=-1
     )
@@ -122,7 +115,7 @@ def main():
 
 
 
-    # # Define the parameter grid
+    # # # Define the parameter grid
     # param_grid = {
     #     "n_estimators": [100, 200, 300, 500],
     #     "max_depth": [3, 5, 7, 9],
@@ -166,6 +159,7 @@ def main():
     # y_pred = search.predict(X_test)
 
     # print(classification_report(y_test, y_pred))
+    # print(confusion_matrix(y_test, y_pred))
 
 
 if __name__ == '__main__':

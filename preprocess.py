@@ -876,7 +876,7 @@ def main():
 
     df = impute_xg(df)
     df.to_csv('test.csv')
-
+    df = df.copy()
 
     #[[TODO]]
     target_cols = cols = ['HS', 'AS', 'HST', 'AST', 'HF', 'AF', 'HC', 'AC', 'HY', 'AY', 'HR', 'AR']
@@ -957,9 +957,10 @@ def main():
         1,
         0
     )
+
     # team_list = df['HomeTeam'].unique()
     # pd.Series(team_list, name='Team').to_csv('team_list.csv', index=False)
-
+    df = df.copy()
     le = LabelEncoder()
     le_result = LabelEncoder()
     df['home_team_encoded'] = le.fit_transform(df['HomeTeam'])
@@ -1044,7 +1045,7 @@ def main():
 
     df = df[~df['season_start'].isin([2010, 2011, 2012, 2013, 2014])]
 
-
+    df = df.copy()
     df["day_sin"] = np.sin(2 * np.pi * df["day"] / 7)
     df["day_cos"] = np.cos(2 * np.pi * df["day"] / 7)
 
