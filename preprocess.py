@@ -943,7 +943,7 @@ def main():
 
     df = add_win_streaks(df)
     df = add_losing_streaks(df)
-    df = add_head_to_head_lastN(df)
+    # df = add_head_to_head_lastN(df)
 
 
     df['is_3_ko'] = np.where(

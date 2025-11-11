@@ -99,21 +99,21 @@ def main():
     )
 
     # Train the model
-    # rf.fit(X_train, y_train) # eval
-    rf.fit(X,y)
+    rf.fit(X_train, y_train) # eval
+    
     # Predict on test set for eval
-    # y_pred = rf.predict(X_test)
+    y_pred = rf.predict(X_test)
 
-    # # Evaluate
-    # accuracy = accuracy_score(y_test, y_pred)
-    # print(f"Accuracy: {accuracy:.4f}\n")
+    # Evaluate
+    accuracy = accuracy_score(y_test, y_pred)
+    print(f"Accuracy: {accuracy:.4f}\n")
 
-    # print("Classification Report:")
-    # print(classification_report(y_test, y_pred))
+    print("Classification Report:")
+    print(classification_report(y_test, y_pred))
 
-    # print("Confusion Matrix:")
-    # print(confusion_matrix(y_test, y_pred))
-
+    print("Confusion Matrix:")
+    print(confusion_matrix(y_test, y_pred))
+    rf.fit(X,y)
     # Save the trained model to a file
     with open("rf_model.pkl", "wb") as f:
         pickle.dump(rf, f)
