@@ -11,6 +11,7 @@ from sklearn.ensemble import RandomForestClassifier
 
 def main():
     df = pd.read_csv('training.csv')
+    
     df = df.sort_values(['season_start', 'Date'])
 
     df = df.drop(columns=['data_type', 'Date'])
@@ -25,18 +26,40 @@ def main():
     train_df = df.iloc[:-n_test]
     test_df = df.iloc[-n_test:]
 
+    # Weighting samples: more recent seasons get higher weights
+
     X_train = train_df.drop(columns=['ft_result_encoded'])
     y_train = train_df['ft_result_encoded']
 
     X_test = test_df.drop(columns=['ft_result_encoded'])
     y_test = test_df['ft_result_encoded']
+    
     # Compute class weights
-    classes = np.unique(y_train)
-    class_weights = compute_class_weight(class_weight='balanced', classes=classes, y=y_train)
-    weight_dict = {c: w for c, w in zip(classes, class_weights)}
+    linear_step = 0.02  # each newer season gets +0.2 higher weight
+    seasons = sorted(train_df["season_start"].unique())
 
-    # Map weights to each sample
-    sample_weights = y_train.map(weight_dict)
+    # e.g. [2018→1.0, 2019→1.2, 2020→1.4, …]
+    season_weight_map = {season: 1 + i * linear_step for i, season in enumerate(seasons)}
+
+    season_weights = train_df["season_start"].map(season_weight_map)
+
+
+    # 2) Class weights (per label H/D/A encoded)
+    classes = np.unique(y_train)
+    class_weights = compute_class_weight(
+        class_weight='balanced',
+        classes=classes,
+        y=y_train
+    )
+    class_weight_map = {c: w for c, w in zip(classes, class_weights)}
+
+    class_weights_per_row = y_train.map(class_weight_map)
+
+    # 3) Combine: final weight = recency * class
+    sample_weights = season_weights * class_weights_per_row
+
+    # (optional but nice) normalise so average weight ≈ 1
+    sample_weights = sample_weights / sample_weights.mean()
 
     # Initialize XGBoost
     xgb = XGBClassifier(
