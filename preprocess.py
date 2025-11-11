@@ -9,6 +9,46 @@ import unicodedata
 from collections import deque
 import pickle
 
+TEAM_MAPPING = {
+    'Arsenal FC': 'Arsenal',
+    'Aston Villa': 'Aston Villa',
+    'AFC Bournemouth': 'Bournemouth',
+    'Brentford FC': 'Brentford',
+    'Brighton & Hove Albion': 'Brighton',
+    'Burnley FC': 'Burnley',
+    'Cardiff City': 'Cardiff',
+    'Chelsea FC': 'Chelsea',
+    'Crystal Palace': 'Crystal Palace',
+    'Everton FC': 'Everton',
+    'Fulham FC': 'Fulham',
+    'Huddersfield Town': 'Huddersfield',
+    'Hull City': 'Hull',
+    'Ipswich Town': 'Ipswich',
+    'Leeds United': 'Leeds',
+    'Leicester City': 'Leicester',
+    'Liverpool FC': 'Liverpool',
+    'Manchester City': 'Man City',
+    'Manchester United': 'Man United',
+    'Middlesbrough FC': 'Middlesbrough',
+    'Newcastle United': 'Newcastle',
+    'Norwich City': 'Norwich',
+    'Southampton FC': 'Southampton',
+    'Swansea City': 'Swansea',
+    'Stoke City': 'Stoke',
+    'Sunderland AFC': 'Sunderland',
+    'Sheffield United': 'Sheffield United',
+    'Tottenham Hotspur': 'Tottenham',
+    'Watford FC': 'Watford',
+    'West Bromwich Albion': 'West Brom',
+    'West Ham United': 'West Ham',
+    'Wolverhampton Wanderers': 'Wolves',
+    'Nottingham Forest': "Nott'm Forest",
+    'Luton Town': 'Luton',
+    'Ipswich Town': 'Ipswich',
+    'Fulham FC': 'Fulham',
+    'Spurs': 'Tottenham',
+    'Man Utd': 'Man United'
+}
 
 def collate_data():
     # Define the folder path containing the CSV files
@@ -260,13 +300,13 @@ def impute_xg(df):
     """
     # Calculate mean xG for 2017–2019
     ref_years = [2017, 2018, 2019]
-    home_mean = df.loc[df['season_start'].isin(ref_years), 'Home xG'].mean()
-    away_mean = df.loc[df['season_start'].isin(ref_years), 'Away xG'].mean()
+    home_mean = df.loc[df['season_start'].isin(ref_years), 'home_xg'].mean()
+    away_mean = df.loc[df['season_start'].isin(ref_years), 'away_xg'].mean()
     
     # Impute for 2015 & 2016
     mask = df['season_start'].isin([2015, 2016])
-    df.loc[mask, 'Home xG'] = df.loc[mask, 'Home xG'].fillna(home_mean)
-    df.loc[mask, 'Away xG'] = df.loc[mask, 'Away xG'].fillna(away_mean)
+    df.loc[mask, 'home_xg'] = df.loc[mask, 'home_xg'].fillna(home_mean)
+    df.loc[mask, 'away_xg'] = df.loc[mask, 'away_xg'].fillna(away_mean)
     
     return df
 
@@ -777,7 +817,6 @@ def add_head_to_head_lastN(df, N=8, season_col="season_start",
 
     return df
 
-
 def add_gameweek(df):
     # Convert Date to datetime if it's not already
     df['Date'] = pd.to_datetime(df['Date'])
@@ -791,113 +830,56 @@ def add_gameweek(df):
     return df
 
 def main():
-    df = collate_data()
-    df = df.iloc[:, :24]
-    # df['data_type'] = 'Training'
-    # Loading Inference Data to be pipelined as well
-    inference_df = pd.read_csv('sup data/epl-2025-GMTStandardTime.csv')
-    # Split into new columns
-    inference_df[['Date', 'Time']] = inference_df['Date'].str.split(' ', expand=True)
+
+    # Loading and prepping data for merging
+    df = pd.read_csv("sup data/merged_data.csv")
+    # #[[TODO]] select necessary columns properly
+    # df = df.iloc[:, :24]
+
+    # df['Date'] = df['Date'].apply(fix_two_digit_year)
+
+    # df['HomeTeam'] = df['HomeTeam'].map(TEAM_MAPPING).fillna(df['HomeTeam'])
+    # df['AwayTeam'] = df['AwayTeam'].map(TEAM_MAPPING).fillna(df['AwayTeam'])
     
+    # xg_data = pd.read_csv('sup data/clean_xg.csv')
 
-    inference_df = inference_df[[
-        'Date', 'Time', 'Home Team', 'Away Team', 'FTR', 'FTHG', 'FTAG']]
-    # inference_df['data_type'] = 'Inference'
-    inference_df = inference_df.rename(
-        columns={'Home Team': 'HomeTeam', 'Away Team': 'AwayTeam'})
-    # inference_df.to_csv('inference.csv', index=False)
+    # xg_data = xg_data[[
+    #     'date', 'time', 'home_team', 'away_team', 'ftr', 'home_goals', 'away_goals', 'home_xg', 'away_xg']]
+    
+    # #[[TODO]] rename columns properly for merging to df
 
-    df = pd.concat([df, inference_df], ignore_index=True)
-    # df.to_csv('combined_dataset.csv', index=False)
+    # xg_data['date'] = pd.to_datetime(xg_data['date'], dayfirst=True, errors='coerce')
 
-    team_mapping = {
-        'Arsenal FC': 'Arsenal',
-        'Aston Villa': 'Aston Villa',
-        'AFC Bournemouth': 'Bournemouth',
-        'Brentford FC': 'Brentford',
-        'Brighton & Hove Albion': 'Brighton',
-        'Burnley FC': 'Burnley',
-        'Cardiff City': 'Cardiff',
-        'Chelsea FC': 'Chelsea',
-        'Crystal Palace': 'Crystal Palace',
-        'Everton FC': 'Everton',
-        'Fulham FC': 'Fulham',
-        'Huddersfield Town': 'Huddersfield',
-        'Hull City': 'Hull',
-        'Ipswich Town': 'Ipswich',
-        'Leeds United': 'Leeds',
-        'Leicester City': 'Leicester',
-        'Liverpool FC': 'Liverpool',
-        'Manchester City': 'Man City',
-        'Manchester United': 'Man United',
-        'Middlesbrough FC': 'Middlesbrough',
-        'Newcastle United': 'Newcastle',
-        'Norwich City': 'Norwich',
-        'Southampton FC': 'Southampton',
-        'Swansea City': 'Swansea',
-        'Stoke City': 'Stoke',
-        'Sunderland AFC': 'Sunderland',
-        'Sheffield United': 'Sheffield United',
-        'Tottenham Hotspur': 'Tottenham',
-        'Watford FC': 'Watford',
-        'West Bromwich Albion': 'West Brom',
-        'West Ham United': 'West Ham',
-        'Wolverhampton Wanderers': 'Wolves',
-        'Nottingham Forest': "Nott'm Forest",
-        'Luton Town': 'Luton',
-        'Ipswich Town': 'Ipswich',
-        'Fulham FC': 'Fulham',
-        'Spurs': 'Tottenham',
-        'Man Utd': 'Man United'
-    }
-    df['HomeTeam'] = df['HomeTeam'].map(team_mapping).fillna(df['HomeTeam'])
-    df['AwayTeam'] = df['AwayTeam'].map(team_mapping).fillna(df['AwayTeam'])
+    # df= df.merge(
+    #     xg_data,
+    #     left_on=['Date', 'HomeTeam', 'AwayTeam'],
+    #     right_on=['date', 'home_team', 'away_team'],
+    #     how='left'
+    # )
+    # #[[TODO]] Drop redundant columns
+    # df = df.drop(columns=['Home', 'Away','Wk'])
 
-    df['Date'] = df['Date'].apply(fix_two_digit_year)
-    df['month'] = df['Date'].dt.month
-    df['year'] = df['Date'].dt.year
-    df['day'] = df['Date'].dt.dayofweek
 
-    df['season_start'] = np.where(
-        df['month'] > 6,
-        df['year'],
-        (df['year'] - 1)
-    )
+
+    # df['Date'] = df['Date'].apply(fix_two_digit_year)
+    # df['month'] = df['Date'].dt.month
+    # df['year'] = df['Date'].dt.year
+    # df['day'] = df['Date'].dt.dayofweek
+
+    # df['season_start'] = np.where(
+    #     df['month'] > 6,
+    #     df['year'],
+    #     (df['year'] - 1)
+    # )
 
     df = add_gameweek(df)
-    # df['gameweek'] = df['gameweek'].astype(str)
-
-
-    xG_data = pd.read_csv('sup data/clean_xg.csv')
-    xG_data['Date'] = pd.to_datetime(xG_data['Date'], dayfirst=True, errors='coerce')
-    xG_data['month'] = xG_data['Date'].dt.month
-    xG_data['year'] = xG_data['Date'].dt.year
-    xG_data['day'] = xG_data['Date'].dt.dayofweek
-
-    xG_data['season_start'] = np.where(
-        xG_data['month'] > 6,
-        xG_data['year'],
-        (xG_data['year'] - 1)
-    ).astype(float)
-    # Gets rid of that bleddy row limit issue
-    # xG_data = xG_data.loc[:224,:]
-    xG_data['Wk'] = xG_data['Wk'].astype(float, errors='ignore')
-
-    # Perform a left join
-    df= df.merge(
-        xG_data[['Wk','season_start','Home', 'Away', 'Home xG', 'Away xG']],
-        left_on=['season_start','gameweek', 'HomeTeam', 'AwayTeam'],
-        right_on=['season_start','Wk', 'Home', 'Away'],
-        how='left'
-    )
-
-    # Drop redundant columns
-    df = df.drop(columns=['Home', 'Away','Wk'])
 
     df = impute_xg(df)
     df.to_csv('test.csv')
 
-    target_cols = df.columns[11:23]
+
+    #[[TODO]]
+    target_cols = cols = ['HS', 'AS', 'HST', 'AST', 'HF', 'AF', 'HC', 'AC', 'HY', 'AY', 'HR', 'AR']
 
     h_cols = [col for col in target_cols if col.lower().startswith('h')]
     a_cols = [col for col in target_cols if col.lower().startswith('a')]
@@ -918,22 +900,6 @@ def main():
             value_col=col,
             season_col='season_start'
         )
-
-    # for col in h_cols:
-    #     df = all_previous_seasons_avg(
-    #         df,
-    #         team_col='HomeTeam',
-    #         value_col=col,
-    #         season_col='season_start'
-    #     )
-
-    # for col in a_cols:
-    #     df = all_previous_seasons_avg(
-    #         df,
-    #         team_col='AwayTeam',
-    #         value_col=col,
-    #         season_col='season_start'
-    #     )
 
     for col in h_cols:
         df = last_n_seasons_avg(
@@ -957,10 +923,10 @@ def main():
     df = season_so_far_avg(df, team_col="AwayTeam", value_col="FTAG",
                            season_col="season_start", match_col="Date")
 
-    df = season_so_far_avg(df, team_col="HomeTeam", value_col="Home xG",
+    df = season_so_far_avg(df, team_col="HomeTeam", value_col="home_xg",
                            season_col="season_start", match_col="Date")
 
-    df = season_so_far_avg(df, team_col="AwayTeam", value_col="Away xG",
+    df = season_so_far_avg(df, team_col="AwayTeam", value_col="away_xg",
                            season_col="season_start", match_col="Date")
 
     df = last5_avg(df, team_col="HomeTeam", value_col="FTHG",
@@ -969,15 +935,14 @@ def main():
     df = last5_avg(df, team_col="AwayTeam", value_col="FTAG",
                    season_col="season_start", match_col="Date")
 
-    df = last5_avg(df, team_col="HomeTeam", value_col="Home xG",
+    df = last5_avg(df, team_col="HomeTeam", value_col="home_xg",
                    season_col="season_start", match_col="Date")
 
-    df = last5_avg(df, team_col="AwayTeam", value_col="Away xG",
+    df = last5_avg(df, team_col="AwayTeam", value_col="away_xg",
                    season_col="season_start", match_col="Date")
 
     df = add_win_streaks(df)
     df = add_losing_streaks(df)
-    # df = add_goal_difference(df)
     df = add_head_to_head_lastN(df)
 
 
@@ -992,8 +957,8 @@ def main():
         1,
         0
     )
-    team_list = df['HomeTeam'].unique()
-    pd.Series(team_list, name='Team').to_csv('team_list.csv', index=False)
+    # team_list = df['HomeTeam'].unique()
+    # pd.Series(team_list, name='Team').to_csv('team_list.csv', index=False)
 
     le = LabelEncoder()
     le_result = LabelEncoder()
@@ -1012,81 +977,62 @@ def main():
     df = previous_season_total_goals(df)
     df = add_cumulative_points(df)
 
-    transfers = pd.read_csv('sup data/transfer_data_cleaned.csv')
-    # Merge home team data
-    df = df.merge(
-        transfers, how='left', left_on=['HomeTeam', 'season_start'], right_on=['Club', 'season_start'],
-        suffixes=('', '_home')
-    )
+    # transfers = pd.read_csv('sup data/transfer_data_cleaned.csv')
+    # # Merge home team data
+    # df = df.merge(
+    #     transfers, how='left', left_on=['HomeTeam', 'season_start'], right_on=['Club', 'season_start'],
+    #     suffixes=('', '_home')
+    # )
 
-    # Rename columns for clarity
-    df = df.rename(columns={
-        'Expenditure': 'home_Expenditure',
-        'Arrivals': 'home_Arrivals',
-        'Income': 'home_Income',
-        'Departures': 'home_Departures',
-        'Balance': 'home_Balance'
-    })
+    # # Rename columns for clarity
+    # df = df.rename(columns={
+    #     'Expenditure': 'home_Expenditure',
+    #     'Arrivals': 'home_Arrivals',
+    #     'Income': 'home_Income',
+    #     'Departures': 'home_Departures',
+    #     'Balance': 'home_Balance'
+    # })
 
-    # Merge away team data
-    df = df.merge(
-        transfers, how='left', left_on=['AwayTeam', 'season_start'], right_on=['Club', 'season_start'],
-        suffixes=('', '_away')
-    )
+    # # Merge away team data
+    # df = df.merge(
+    #     transfers, how='left', left_on=['AwayTeam', 'season_start'], right_on=['Club', 'season_start'],
+    #     suffixes=('', '_away')
+    # )
 
-    # Rename away columns
-    df = df.rename(columns={
-        'Expenditure': 'away_Expenditure',
-        'Arrivals': 'away_Arrivals',
-        'Income': 'away_Income',
-        'Departures': 'away_Departures',
-        'Balance': 'away_Balance'
-    })
+    # # Rename away columns
+    # df = df.rename(columns={
+    #     'Expenditure': 'away_Expenditure',
+    #     'Arrivals': 'away_Arrivals',
+    #     'Income': 'away_Income',
+    #     'Departures': 'away_Departures',
+    #     'Balance': 'away_Balance'
+    # })
 
-    # Drop extra columns
-    df = df.drop(columns=['Club', 'Club_away', 'Home xG', 'Away xG'])
+    # # Drop extra columns
+    # df = df.drop(columns=['Club', 'Club_away', 'Home xG', 'Away xG'])
 
     # Define the columns to scale
-    columns_to_scale = [
-        'prev_season_avg_HS', 'prev_season_avg_HST', 'prev_season_avg_HF',
-        'prev_season_avg_HC', 'prev_season_avg_HY', 'prev_season_avg_HR',
-        'prev_season_avg_AS', 'prev_season_avg_AST', 'prev_season_avg_AF',
-        'prev_season_avg_AC', 'prev_season_avg_AY', 'prev_season_home_ht_leads_home',
-        'prev_season_away_ht_leads_home', 'prev_season_home_ht_leads_away',
-        'prev_season_away_ht_leads_away', 'prev_season_home_wins',
-        'prev_season_away_wins', 'prev_season_home_points',
-        'prev_season_away_points', 'prev_season_total_home_goals',
-        'prev_season_total_away_goals',
-        "home_Expenditure", "home_Arrivals", "home_Income", "home_Departures", "home_Balance", "away_Expenditure", "away_Arrivals", "away_Income", "away_Departures", "away_Balance",
-        # "all_prev_seasons_avg_HS", "all_prev_seasons_avg_HST", "all_prev_seasons_avg_HF", "all_prev_seasons_avg_HC", "all_prev_seasons_avg_HY", "all_prev_seasons_avg_HR", "all_prev_seasons_avg_AS", "all_prev_seasons_avg_AST", "all_prev_seasons_avg_AF", "all_prev_seasons_avg_AC", "all_prev_seasons_avg_AY",
-        "season_so_far_avg_FTHG", "season_so_far_avg_FTAG", "last5_avg_FTHG", "last5_avg_FTAG",
-        "last_n_seasons_avg_HS",
-        "last_n_seasons_avg_HST",
-        "last_n_seasons_avg_HF",
-        "last_n_seasons_avg_HC",
-        "last_n_seasons_avg_HY",
-        "last_n_seasons_avg_HR",
-        "last_n_seasons_avg_AS",
-        "last_n_seasons_avg_AST",
-        "last_n_seasons_avg_AF",
-        "last_n_seasons_avg_AC",
-        "last_n_seasons_avg_AY",
-        "season_so_far_avg_Home xG",
-        "season_so_far_avg_Away xG",
-        "last5_avg_Home xG",
-        "last5_avg_Away xG",
-        "home_home_win_streak",
-        "away_away_win_streak",
-        "home_total_win_streak",
-        "away_total_win_streak",
-        "home_home_losing_streak",
-        "away_away_losing_streak",
-        "home_total_losing_streak",
-        "away_total_losing_streak",
-        "h2h_home_wins_lastN",
-        "h2h_away_wins_lastN",
-        "h2h_draws_lastN"
+    df.to_csv('prescaling_before.csv', index=False)
+    exclude = [
+        'Div', 'Date', 'Time', 'HomeTeam', 'AwayTeam', 'Referee', 'gameweek',
+        'home_team_encoded', 'away_team_encoded', 'ft_result_encoded',
+        'home_leading_ht', 'away_leading_ht',
+        'home_win', 'away_win', 'is_3_ko', 'is_early_ko',
+        'day',
+        'month',
+        'year',
+        'HomeTeam',
+        'AwayTeam',
+        'FTHG', 'FTAG', 'FTR', 'HTHG', 'HTAG', 'HTR', 'HS', 'AS', 'HST', 'AST', 'HF', 'AF', 'HC', 'AC', 'HY', 'AY', 'HR', 'AR',
+        'home_win',
+        'away_win',
+        'season_start'
+        
     ]
+
+    columns_to_scale = [c for c in df.select_dtypes(include=['number']).columns if c not in exclude]
+
+
     df.to_csv('prescaling.csv', index=False)
     # Initialize StandardScaler
     scaler = StandardScaler()
@@ -1106,8 +1052,7 @@ def main():
     df["month_cos"] = np.cos(2 * np.pi * df["month"] / 12)
 
     df.drop(
-        [
-            'day',
+        [   'day',
             'month',
             'year',
             'Div',
@@ -1119,7 +1064,10 @@ def main():
             'FTHG', 'FTAG', 'FTR', 'HTHG', 'HTAG', 'HTR', 'HS', 'AS', 'HST', 'AST', 'HF', 'AF', 'HC', 'AC', 'HY', 'AY', 'HR', 'AR',
             'home_win',
             'away_win',
-            'home_leading_ht', 'away_leading_ht'
+            'home_leading_ht', 'away_leading_ht',
+            'Club_away',
+            'home_xg',
+            'away_xg'
         ], axis=1, inplace=True
     )
 
