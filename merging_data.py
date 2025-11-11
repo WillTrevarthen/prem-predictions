@@ -128,10 +128,14 @@ if __name__ == "__main__":
 
     df= df.merge(
         xg_data,
-        left_on=['Date', 'Time', 'HomeTeam', 'AwayTeam'],
-        right_on=['Date', 'Time', 'HomeTeam', 'AwayTeam'],
+        left_on=['Date', 'HomeTeam', 'AwayTeam'],
+        right_on=['Date', 'HomeTeam', 'AwayTeam'],
         how='outer'
     )
+
+    # If you still ended up with Time_x / Time_y:
+    df['Time'] = df['Time_x'].combine_first(df['Time_y'])
+    df = df.drop(columns=['Time_x', 'Time_y'])
 
     df = df.dropna(how='all')
     df['month'] = df['Date'].dt.month
