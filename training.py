@@ -7,7 +7,7 @@ from sklearn.model_selection import RandomizedSearchCV
 from sklearn.metrics import make_scorer, accuracy_score
 import numpy as np
 from sklearn.utils.class_weight import compute_class_weight
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, StackingClassifier
 
 def main():
     df = pd.read_csv('training.csv')
@@ -92,7 +92,36 @@ def main():
     print("Confusion Matrix:")
     print(confusion_matrix(y_test, y_pred))
 
-    xgb.fit(X,y)
+
+    # Compute class weights for X and y (full dataset)
+    linear_step = 0.02  # each newer season gets +0.2 higher weight
+    seasons = sorted(X["season_start"].unique())
+
+    # e.g. [2018→1.0, 2019→1.2, 2020→1.4, …]
+    season_weight_map = {season: 1 + i * linear_step for i, season in enumerate(seasons)}
+
+    season_weights = X["season_start"].map(season_weight_map)
+
+
+    # 2) Class weights (per label H/D/A encoded)
+    classes = np.unique(y)
+    class_weights = compute_class_weight(
+        class_weight='balanced',
+        classes=classes,
+        y=y
+    )
+    class_weight_map = {c: w for c, w in zip(classes, class_weights)}
+
+    class_weights_per_row = y.map(class_weight_map)
+
+    # 3) Combine: final weight = recency * class
+    sample_weights = season_weights * class_weights_per_row
+
+    # (optional but nice) normalise so average weight ≈ 1
+    sample_weights = sample_weights / sample_weights.mean()
+
+
+    xgb.fit(X,y, sample_weight=sample_weights)
 
     # Save model
     with open("xgb_model.pkl", "wb") as f:
@@ -133,6 +162,75 @@ def main():
     # Save the trained model to a file
     with open("rf_model.pkl", "wb") as f:
         pickle.dump(rf, f)
+
+    # # --- stacking ensemble ---
+
+    # # --- base models ---
+    # rf = RandomForestClassifier(
+    #     n_estimators=300,
+    #     max_depth=None,
+    #     max_features='sqrt',
+    #     min_samples_split=8,
+    #     min_samples_leaf=3,
+    #     class_weight={0: 1, 1: 4, 2: 1},
+    #     random_state=42,
+    #     n_jobs=-1,
+    # )
+
+    # xgb_base = XGBClassifier(
+    #     objective="multi:softprob",
+    #     n_estimators=100,
+    #     max_depth=3,
+    #     num_class=len(classes),
+    #     min_child_weight=5,
+    #     gamma=0.3,
+    #     learning_rate=0.01,
+    #     subsample=0.6,
+    #     colsample_bytree=0.8,
+    #     random_state=42,
+    #     n_jobs=-1,
+    #     eval_metric="mlogloss",
+    # )
+
+    # estimators = [
+    #     ('rf', rf),
+    #     ('xgb', xgb_base),
+    # ]
+
+    # # meta-model
+    # meta = XGBClassifier(
+    #     objective="multi:softprob",
+    #     n_estimators=100,
+    #     max_depth=3,
+    #     random_state=42,
+    #     n_jobs=-1,
+    #     eval_metric="mlogloss",
+    # )
+
+    # stack = StackingClassifier(
+    #     estimators=estimators,
+    #     final_estimator=meta,
+    #     n_jobs=-1
+    # )
+
+    # # --- fit once with correct weights ---
+    # stack.fit(X_train, y_train, sample_weight=sample_weights)
+
+    # # --- evaluate ---
+    # y_pred = stack.predict(X_test)
+    # accuracy = accuracy_score(y_test, y_pred)
+    # print(f"Accuracy: {accuracy:.4f}\n")
+    # print("Classification Report:")
+    # print(classification_report(y_test, y_pred))
+    # print("Confusion Matrix:")
+    # print(confusion_matrix(y_test, y_pred))
+
+    # # --- save the trained stack ---
+    # with open("ensemble_model.pkl", "wb") as f:
+    #     pickle.dump(stack, f)
+
+
+
 
 
 
