@@ -130,10 +130,10 @@ if __name__ == "__main__":
             df["season"] = season  # add season column
             all_seasons.append(df)
         except Exception as e:
-            print(f"⚠️  Skipping {season} due to error: {e}")
+            print(f"Skipping {season} due to error: {e}")
 
     # Combine all into one DataFrame
-    current = pd.concat(all_seasons, ignore_index=False)
+    current = pd.concat(all_seasons, join='outer', ignore_index=False)
     current.to_csv("sup data/fbref_player_season_stats_2015-2025.csv", index=False)
 
     all_seasons = []
@@ -148,9 +148,9 @@ if __name__ == "__main__":
             df["season"] = season  # add season column
             all_seasons.append(df)
         except Exception as e:
-            print(f"⚠️  Skipping {season} due to error: {e}")
+            print(f"Skipping {season} due to error: {e}")
     # Combine all into one DataFrame
-    team_season = pd.concat(all_seasons, ignore_index=False)
+    team_season = pd.concat(all_seasons, join='outer', ignore_index=False)
     team_season.to_csv("sup data/fbref_team_season_schedule_with_xg.csv", index=False)
 
 

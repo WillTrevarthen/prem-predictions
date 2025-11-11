@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from getdata import get_fbref_table               #import the function to get FBref data       
+# from getdata import get_fbref_table               #import the function to get FBref data       
 from sklearn.decomposition import PCA
 from sklearn.impute import SimpleImputer
 
@@ -89,16 +89,26 @@ if __name__ == '__main__':
     progression_chosen_stats = ['PrgC', 'PrgP', 'PrgR']
 
     # Get all second-level column names under "Per 90 Minutes"
-    per90_stats = list(current['Per 90 Minutes'].columns)
+    per90_stats = current.filter(like='Per 90 Minutes').columns.tolist()
+    per90_stats = current.loc[0, per90_stats].tolist()
+
+
 
     chosen_stats = (
-        [('Playing Time', stat) for stat in playing_time_chosen_stats] +
-        [('Progression', stat) for stat in progression_chosen_stats] +
-        [('Per 90 Minutes', stat) for stat in per90_stats]
+        playing_time_chosen_stats +
+        progression_chosen_stats +
+        per90_stats
     )
 
+    fixed_cols = 4
+    new_cols = list(current.columns)
+    new_cols[fixed_cols:] = current.iloc[0, fixed_cols:].astype(str).tolist()
+    current.columns = new_cols
+    current = current.drop(current.index[0]).reset_index(drop=True)
+
+
     # Start from your stats subset
-    current_subset = current[chosen_stats + [('RoleGroup', '')]].copy()
+    current_subset = current[chosen_stats].copy()
 
     current_subset = current_subset.reset_index()
 
@@ -197,7 +207,7 @@ if __name__ == '__main__':
     pca_components = pca.fit_transform(features)
     pca_df = pd.DataFrame(pca_components, columns=[f'PC{i+1}' for i in range(pca.n_components_)])
     final_df = pd.concat([grouped_stats_wide[['season', 'team']].reset_index(drop=True), pca_df], axis=1)
-    final_df.to_csv('cleaned_player_stats.csv', index=False)
+    final_df.to_csv('sup data/cleaned_player_stats.csv', index=False)
 
 
 

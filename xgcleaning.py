@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 if __name__ == '__main__':
     df = pd.read_csv('sup data/fbref_team_season_schedule_with_xg.csv')
@@ -64,6 +65,15 @@ if __name__ == '__main__':
     df[["home_goals", "away_goals"]] = (
         df["score"].str.extract(r"(\d+)-(\d+)").astype('Int64')
     )
+
+    df['home_goals'] = pd.to_numeric(df['home_goals'], errors='coerce')
+    df['away_goals'] = pd.to_numeric(df['away_goals'], errors='coerce')
+
+    df['ftr'] = pd.Series([np.nan] * len(df), dtype=object)
+
+    df.loc[df['home_goals'] > df['away_goals'], 'ftr'] = 'H'
+    df.loc[df['home_goals'] < df['away_goals'], 'ftr'] = 'A'
+    df.loc[df['home_goals'] == df['away_goals'], 'ftr'] = 'D'
 
     
     df.to_csv('sup data/clean_xg.csv', index=False)

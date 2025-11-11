@@ -9,6 +9,46 @@ import unicodedata
 from collections import deque
 import pickle
 
+TEAM_MAPPING = {
+    'Arsenal FC': 'Arsenal',
+    'Aston Villa': 'Aston Villa',
+    'AFC Bournemouth': 'Bournemouth',
+    'Brentford FC': 'Brentford',
+    'Brighton & Hove Albion': 'Brighton',
+    'Burnley FC': 'Burnley',
+    'Cardiff City': 'Cardiff',
+    'Chelsea FC': 'Chelsea',
+    'Crystal Palace': 'Crystal Palace',
+    'Everton FC': 'Everton',
+    'Fulham FC': 'Fulham',
+    'Huddersfield Town': 'Huddersfield',
+    'Hull City': 'Hull',
+    'Ipswich Town': 'Ipswich',
+    'Leeds United': 'Leeds',
+    'Leicester City': 'Leicester',
+    'Liverpool FC': 'Liverpool',
+    'Manchester City': 'Man City',
+    'Manchester United': 'Man United',
+    'Middlesbrough FC': 'Middlesbrough',
+    'Newcastle United': 'Newcastle',
+    'Norwich City': 'Norwich',
+    'Southampton FC': 'Southampton',
+    'Swansea City': 'Swansea',
+    'Stoke City': 'Stoke',
+    'Sunderland AFC': 'Sunderland',
+    'Sheffield United': 'Sheffield United',
+    'Tottenham Hotspur': 'Tottenham',
+    'Watford FC': 'Watford',
+    'West Bromwich Albion': 'West Brom',
+    'West Ham United': 'West Ham',
+    'Wolverhampton Wanderers': 'Wolves',
+    'Nottingham Forest': "Nott'm Forest",
+    'Luton Town': 'Luton',
+    'Ipswich Town': 'Ipswich',
+    'Fulham FC': 'Fulham',
+    'Spurs': 'Tottenham',
+    'Man Utd': 'Man United'
+}
 
 def collate_data():
     # Define the folder path containing the CSV files
@@ -790,68 +830,36 @@ def add_gameweek(df):
     return df
 
 def main():
+
+    # Loading and prepping data for merging
     df = pd.read_csv("sup data/all_seasons_data.csv")
+    #[[TODO]] select necessary columns properly
     df = df.iloc[:, :24]
-    # df['data_type'] = 'Training'
-    # Loading Inference Data to be pipelined as well
-    # inference_df = pd.read_csv('sup data/epl-2025-GMTStandardTime.csv')
-    # # Split into new columns
-    # inference_df[['Date', 'Time']] = inference_df['Date'].str.split(' ', expand=True)
+
+    df['Date'] = df['Date'].apply(fix_two_digit_year)
+
+    df['HomeTeam'] = df['HomeTeam'].map(TEAM_MAPPING).fillna(df['HomeTeam'])
+    df['AwayTeam'] = df['AwayTeam'].map(TEAM_MAPPING).fillna(df['AwayTeam'])
     
-    xg_data = pd.read_csv('sup data/fbref_team_season_schedule_with_xg.csv')
+    xg_data = pd.read_csv('sup data/clean_xg.csv')
 
-    inference_df = inference_df[[
-        'Date', 'Time', 'Home Team', 'Away Team', 'FTR', 'FTHG', 'FTAG']]
-    # inference_df['data_type'] = 'Inference'
-    inference_df = inference_df.rename(
-        columns={'Home Team': 'HomeTeam', 'Away Team': 'AwayTeam'})
-    # inference_df.to_csv('inference.csv', index=False)
+    xg_data = xg_data[[
+        'date', 'time', 'home_team', 'away_team', 'ftr', 'home_goals', 'away_goals', 'home_xg', 'away_xg']]
+    
+    #[[TODO]] rename columns properly for merging to df
 
-    df = pd.concat([df, inference_df], ignore_index=True)
-    # df.to_csv('combined_dataset.csv', index=False)
+    xg_data['date'] = pd.to_datetime(xg_data['date'], dayfirst=True, errors='coerce')
 
-    team_mapping = {
-        'Arsenal FC': 'Arsenal',
-        'Aston Villa': 'Aston Villa',
-        'AFC Bournemouth': 'Bournemouth',
-        'Brentford FC': 'Brentford',
-        'Brighton & Hove Albion': 'Brighton',
-        'Burnley FC': 'Burnley',
-        'Cardiff City': 'Cardiff',
-        'Chelsea FC': 'Chelsea',
-        'Crystal Palace': 'Crystal Palace',
-        'Everton FC': 'Everton',
-        'Fulham FC': 'Fulham',
-        'Huddersfield Town': 'Huddersfield',
-        'Hull City': 'Hull',
-        'Ipswich Town': 'Ipswich',
-        'Leeds United': 'Leeds',
-        'Leicester City': 'Leicester',
-        'Liverpool FC': 'Liverpool',
-        'Manchester City': 'Man City',
-        'Manchester United': 'Man United',
-        'Middlesbrough FC': 'Middlesbrough',
-        'Newcastle United': 'Newcastle',
-        'Norwich City': 'Norwich',
-        'Southampton FC': 'Southampton',
-        'Swansea City': 'Swansea',
-        'Stoke City': 'Stoke',
-        'Sunderland AFC': 'Sunderland',
-        'Sheffield United': 'Sheffield United',
-        'Tottenham Hotspur': 'Tottenham',
-        'Watford FC': 'Watford',
-        'West Bromwich Albion': 'West Brom',
-        'West Ham United': 'West Ham',
-        'Wolverhampton Wanderers': 'Wolves',
-        'Nottingham Forest': "Nott'm Forest",
-        'Luton Town': 'Luton',
-        'Ipswich Town': 'Ipswich',
-        'Fulham FC': 'Fulham',
-        'Spurs': 'Tottenham',
-        'Man Utd': 'Man United'
-    }
-    df['HomeTeam'] = df['HomeTeam'].map(team_mapping).fillna(df['HomeTeam'])
-    df['AwayTeam'] = df['AwayTeam'].map(team_mapping).fillna(df['AwayTeam'])
+    df= df.merge(
+        xg_data,
+        left_on=['Date', 'HomeTeam', 'AwayTeam'],
+        right_on=['date', 'home_team', 'away_team'],
+        how='left'
+    )
+    #[[TODO]] Drop redundant columns
+    df = df.drop(columns=['Home', 'Away','Wk'])
+
+
 
     df['Date'] = df['Date'].apply(fix_two_digit_year)
     df['month'] = df['Date'].dt.month
@@ -865,34 +873,6 @@ def main():
     )
 
     df = add_gameweek(df)
-    # df['gameweek'] = df['gameweek'].astype(str)
-
-
-    xG_data = pd.read_csv('sup data/clean_xg.csv')
-    xG_data['Date'] = pd.to_datetime(xG_data['Date'], dayfirst=True, errors='coerce')
-    xG_data['month'] = xG_data['Date'].dt.month
-    xG_data['year'] = xG_data['Date'].dt.year
-    xG_data['day'] = xG_data['Date'].dt.dayofweek
-
-    xG_data['season_start'] = np.where(
-        xG_data['month'] > 6,
-        xG_data['year'],
-        (xG_data['year'] - 1)
-    ).astype(float)
-    # Gets rid of that bleddy row limit issue
-    # xG_data = xG_data.loc[:224,:]
-    xG_data['Wk'] = xG_data['Wk'].astype(float, errors='ignore')
-
-    # Perform a left join
-    df= df.merge(
-        xG_data[['Wk','season_start','Home', 'Away', 'Home xG', 'Away xG']],
-        left_on=['season_start','gameweek', 'HomeTeam', 'AwayTeam'],
-        right_on=['season_start','Wk', 'Home', 'Away'],
-        how='left'
-    )
-
-    # Drop redundant columns
-    df = df.drop(columns=['Home', 'Away','Wk'])
 
     df = impute_xg(df)
     df.to_csv('test.csv')
@@ -918,22 +898,6 @@ def main():
             value_col=col,
             season_col='season_start'
         )
-
-    # for col in h_cols:
-    #     df = all_previous_seasons_avg(
-    #         df,
-    #         team_col='HomeTeam',
-    #         value_col=col,
-    #         season_col='season_start'
-    #     )
-
-    # for col in a_cols:
-    #     df = all_previous_seasons_avg(
-    #         df,
-    #         team_col='AwayTeam',
-    #         value_col=col,
-    #         season_col='season_start'
-    #     )
 
     for col in h_cols:
         df = last_n_seasons_avg(
@@ -977,7 +941,6 @@ def main():
 
     df = add_win_streaks(df)
     df = add_losing_streaks(df)
-    # df = add_goal_difference(df)
     df = add_head_to_head_lastN(df)
 
 
