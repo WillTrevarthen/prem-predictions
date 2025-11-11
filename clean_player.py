@@ -97,7 +97,8 @@ if __name__ == '__main__':
     chosen_stats = (
         playing_time_chosen_stats +
         progression_chosen_stats +
-        per90_stats
+        per90_stats +
+        ['nation', 'pos', 'age', 'Starts','nan']
     )
 
     fixed_cols = 4
@@ -113,7 +114,7 @@ if __name__ == '__main__':
     current_subset = current_subset.reset_index()
 
 
-    current_subset.columns = [flatten_col(c) for c in current_subset.columns]
+    # current_subset.columns = [flatten_col(c) for c in current_subset.columns]
 
     current_subset['PrgC_per90'] = np.where(
         current_subset['90s'] > 0,

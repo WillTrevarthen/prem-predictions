@@ -114,7 +114,7 @@ if __name__ == "__main__":
         all_seasons.append(df_football_data)
 
     df_football_data = pd.concat(all_seasons, join='outer', ignore_index=False)        
-    df_football_data.to_csv(f"sup data/all_seasons_data.csv", index=False)
+    df_football_data.to_csv(f"sup data/all_seasons_data.csv", index=True)
 
     # Fetch all seasons from FBref and save csv
     all_seasons = []
@@ -134,7 +134,7 @@ if __name__ == "__main__":
 
     # Combine all into one DataFrame
     current = pd.concat(all_seasons, join='outer', ignore_index=False)
-    current.to_csv("sup data/fbref_player_season_stats_2015-2025.csv", index=False)
+    current.to_csv("sup data/fbref_player_season_stats_2015-2025.csv", index=True)
 
     all_seasons = []
     for season in range(2015, 2026):  # inclusive of 2025
@@ -151,7 +151,7 @@ if __name__ == "__main__":
             print(f"Skipping {season} due to error: {e}")
     # Combine all into one DataFrame
     team_season = pd.concat(all_seasons, join='outer', ignore_index=False)
-    team_season.to_csv("sup data/fbref_team_season_schedule_with_xg.csv", index=False)
+    team_season.to_csv("sup data/fbref_team_season_schedule_with_xg.csv", index=True)
 
 
 
