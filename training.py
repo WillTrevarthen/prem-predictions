@@ -8,6 +8,7 @@ from sklearn.metrics import make_scorer, accuracy_score
 import numpy as np
 from sklearn.utils.class_weight import compute_class_weight
 from sklearn.ensemble import RandomForestClassifier, StackingClassifier
+from sklearn.calibration import CalibratedClassifierCV
 
 def main():
     df = pd.read_csv('training.csv')
@@ -122,6 +123,13 @@ def main():
 
 
     xgb.fit(X,y, sample_weight=sample_weights)
+    
+    #------calibrated-classifier------TEST
+    calibrated_xgb = CalibratedClassifierCV(xgb, method='isotonic', cv='prefit')
+    calibrated_xgb.fit(X, y, sample_weight=sample_weights)
+    with open("calibrated_xgb_model.pkl", "wb") as f:
+        pickle.dump(calibrated_xgb, f)
+    #------calibrated-classifier------TEST
 
     # Save model
     with open("xgb_model.pkl", "wb") as f:
@@ -228,6 +236,9 @@ def main():
     # # --- save the trained stack ---
     # with open("ensemble_model.pkl", "wb") as f:
     #     pickle.dump(stack, f)
+
+
+
 
 
 
