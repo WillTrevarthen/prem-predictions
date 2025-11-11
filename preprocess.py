@@ -832,51 +832,53 @@ def add_gameweek(df):
 def main():
 
     # Loading and prepping data for merging
-    df = pd.read_csv("sup data/all_seasons_data.csv")
-    #[[TODO]] select necessary columns properly
-    df = df.iloc[:, :24]
+    df = pd.read_csv("sup data/merged_data.csv")
+    # #[[TODO]] select necessary columns properly
+    # df = df.iloc[:, :24]
 
-    df['Date'] = df['Date'].apply(fix_two_digit_year)
+    # df['Date'] = df['Date'].apply(fix_two_digit_year)
 
-    df['HomeTeam'] = df['HomeTeam'].map(TEAM_MAPPING).fillna(df['HomeTeam'])
-    df['AwayTeam'] = df['AwayTeam'].map(TEAM_MAPPING).fillna(df['AwayTeam'])
+    # df['HomeTeam'] = df['HomeTeam'].map(TEAM_MAPPING).fillna(df['HomeTeam'])
+    # df['AwayTeam'] = df['AwayTeam'].map(TEAM_MAPPING).fillna(df['AwayTeam'])
     
-    xg_data = pd.read_csv('sup data/clean_xg.csv')
+    # xg_data = pd.read_csv('sup data/clean_xg.csv')
 
-    xg_data = xg_data[[
-        'date', 'time', 'home_team', 'away_team', 'ftr', 'home_goals', 'away_goals', 'home_xg', 'away_xg']]
+    # xg_data = xg_data[[
+    #     'date', 'time', 'home_team', 'away_team', 'ftr', 'home_goals', 'away_goals', 'home_xg', 'away_xg']]
     
-    #[[TODO]] rename columns properly for merging to df
+    # #[[TODO]] rename columns properly for merging to df
 
-    xg_data['date'] = pd.to_datetime(xg_data['date'], dayfirst=True, errors='coerce')
+    # xg_data['date'] = pd.to_datetime(xg_data['date'], dayfirst=True, errors='coerce')
 
-    df= df.merge(
-        xg_data,
-        left_on=['Date', 'HomeTeam', 'AwayTeam'],
-        right_on=['date', 'home_team', 'away_team'],
-        how='left'
-    )
-    #[[TODO]] Drop redundant columns
-    df = df.drop(columns=['Home', 'Away','Wk'])
+    # df= df.merge(
+    #     xg_data,
+    #     left_on=['Date', 'HomeTeam', 'AwayTeam'],
+    #     right_on=['date', 'home_team', 'away_team'],
+    #     how='left'
+    # )
+    # #[[TODO]] Drop redundant columns
+    # df = df.drop(columns=['Home', 'Away','Wk'])
 
 
 
-    df['Date'] = df['Date'].apply(fix_two_digit_year)
-    df['month'] = df['Date'].dt.month
-    df['year'] = df['Date'].dt.year
-    df['day'] = df['Date'].dt.dayofweek
+    # df['Date'] = df['Date'].apply(fix_two_digit_year)
+    # df['month'] = df['Date'].dt.month
+    # df['year'] = df['Date'].dt.year
+    # df['day'] = df['Date'].dt.dayofweek
 
-    df['season_start'] = np.where(
-        df['month'] > 6,
-        df['year'],
-        (df['year'] - 1)
-    )
+    # df['season_start'] = np.where(
+    #     df['month'] > 6,
+    #     df['year'],
+    #     (df['year'] - 1)
+    # )
 
     df = add_gameweek(df)
 
     df = impute_xg(df)
     df.to_csv('test.csv')
 
+
+    #[[TODO]]
     target_cols = df.columns[11:23]
 
     h_cols = [col for col in target_cols if col.lower().startswith('h')]

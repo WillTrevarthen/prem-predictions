@@ -1,8 +1,56 @@
 import numpy as np
 import pandas as pd
-# from getdata import get_fbref_table               #import the function to get FBref data       
+from getdata import get_fbref_table                                         #import the function to get FBref data
 from sklearn.decomposition import PCA
 from sklearn.impute import SimpleImputer
+
+def get_player_stats():
+    all_seasons = []
+    for season in range(2015, 2026):  # inclusive of 2025
+        print(f"Fetching data for {season} season...")
+        try:
+            df = get_fbref_table(
+                league="ENG-Premier League",
+                season=season,
+                scope="player_season",
+                stat_type="standard",
+            )
+            df["season"] = season  # add season column
+            all_seasons.append(df)
+        except Exception as e:
+            print(f"Skipping {season} due to error: {e}")
+    # Combine all into one DataFrame
+    current = pd.concat(all_seasons, ignore_index=False)
+    return current
+
+
+
+def simplify_pos(pos: str) -> str:                                          #function to simplify player positions into main categories              
+    if not pos or pd.isna(pos):
+        return "Unknown"
+
+    pos = pos.upper().replace(" ", "")
+    roles = pos.split(",")
+
+    # Define role priority (defensive first)
+    priority = ["GK", "DF", "MF", "FW"]                                     #list of roles in order of priority
+
+    for r in priority:
+        if r in roles:
+            return {"GK": "GK", "DF": "DEF", "MF": "MID", "FW": "ATT"}[r]
+
+    return "Unknown"
+
+
+def flatten_col(col):
+    if isinstance(col, tuple):
+        top, sub = col
+        if sub != '':
+            return sub          # use second level: 'Min', 'Gls', 'xG', ...
+        else:
+            return top          # use first level when second is empty: 'nation', 'RoleGroup'
+    else:
+        return col              # already a simple string
 
 def minute_weighted_group_aggregate(
     df: pd.DataFrame,
@@ -49,39 +97,8 @@ def minute_weighted_group_aggregate(
     grouped = df.groupby(list(group_cols), dropna=False).apply(agg_func).reset_index()
     return grouped
 
-
-def flatten_col(col):
-    if isinstance(col, tuple):
-        top, sub = col
-        if sub != '':
-            return sub          # use second level: 'Min', 'Gls', 'xG', ...
-        else:
-            return top          # use first level when second is empty: 'nation', 'RoleGroup'
-    else:
-        return col              # already a simple string
-
-
-def simplify_pos(pos: str) -> str: #function to simplify player positions into main categories              
-    if not pos or pd.isna(pos):
-        return "Unknown"
-
-    pos = pos.upper().replace(" ", "")
-    roles = pos.split(",")
-
-    # Define role priority (defensive first)
-    priority = ["GK", "DF", "MF", "FW"]    #list of roles in order of priority
-
-    for r in priority:
-        if r in roles:
-            return {"GK": "GK", "DF": "DEF", "MF": "MID", "FW": "ATT"}[r]
-
-    return "Unknown"
-
-
-if __name__ == '__main__':
-
-
-    current = pd.read_csv('sup data/fbref_player_season_stats_2015-2025.csv')
+if __name__ == "__main__":
+    current = get_player_stats()
 
     current["RoleGroup"] = current["pos"].apply(simplify_pos)
 
@@ -89,32 +106,20 @@ if __name__ == '__main__':
     progression_chosen_stats = ['PrgC', 'PrgP', 'PrgR']
 
     # Get all second-level column names under "Per 90 Minutes"
-    per90_stats = current.filter(like='Per 90 Minutes').columns.tolist()
-    per90_stats = current.loc[0, per90_stats].tolist()
-
-
+    per90_stats = list(current['Per 90 Minutes'].columns)
 
     chosen_stats = (
-        playing_time_chosen_stats +
-        progression_chosen_stats +
-        per90_stats +
-        ['nation', 'pos', 'age', 'Starts','nan']
+        [('Playing Time', stat) for stat in playing_time_chosen_stats] +
+        [('Progression', stat) for stat in progression_chosen_stats] +
+        [('Per 90 Minutes', stat) for stat in per90_stats]
     )
 
-    fixed_cols = 4
-    new_cols = list(current.columns)
-    new_cols[fixed_cols:] = current.iloc[0, fixed_cols:].astype(str).tolist()
-    current.columns = new_cols
-    current = current.drop(current.index[0]).reset_index(drop=True)
-
-
     # Start from your stats subset
-    current_subset = current[chosen_stats].copy()
+    current_subset = current[chosen_stats + [('RoleGroup', '')]].copy()
 
     current_subset = current_subset.reset_index()
 
-
-    # current_subset.columns = [flatten_col(c) for c in current_subset.columns]
+    current_subset.columns = [flatten_col(c) for c in current_subset.columns]
 
     current_subset['PrgC_per90'] = np.where(
         current_subset['90s'] > 0,
@@ -133,6 +138,7 @@ if __name__ == '__main__':
         current_subset['PrgR'] / current_subset['90s'],
         0
     )
+
 
     grouped_stats = minute_weighted_group_aggregate(current_subset)
     grouped_stats = grouped_stats[grouped_stats['RoleGroup']!='GK']
@@ -209,11 +215,3 @@ if __name__ == '__main__':
     pca_df = pd.DataFrame(pca_components, columns=[f'PC{i+1}' for i in range(pca.n_components_)])
     final_df = pd.concat([grouped_stats_wide[['season', 'team']].reset_index(drop=True), pca_df], axis=1)
     final_df.to_csv('sup data/cleaned_player_stats.csv', index=False)
-
-
-
-
-
-
-
-

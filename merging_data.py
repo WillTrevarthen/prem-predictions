@@ -90,7 +90,12 @@ def fix_two_digit_year(d):
         return pd.to_datetime(d, dayfirst=True)
     except:
         return pd.to_datetime(d, dayfirst=True, format='%d/%m/%y')
-
+    
+def convert_season_code(code):
+    """Convert 4-digit season codes like 1516 → 2015."""
+    # Ensure it's a string (handles numeric columns)
+    code_str = str(code)
+    return int("20" + code_str[:2])
 
 
 if __name__ == "__main__":
@@ -174,22 +179,26 @@ if __name__ == "__main__":
 
 
     # Merging Player data
-    player_data = pd.read_csv('sup data/fbref_player_season_stats_2015-2025.csv')
+    player_data = pd.read_csv('sup data/cleaned_player_stats.csv')
+
+    player_data['season'] = player_data['season'].map(convert_season_code)
+
+    player_data_home = player_data.add_suffix('_home')
+    player_data_away = player_data.add_suffix('_away')
+
 
     df = df.merge(
-        player_data, how='left', left_on=['HomeTeam', 'season_start'], right_on=['Club', 'season_start'],
-        suffixes=('', '_home')
+        player_data_home, how='left', left_on=['HomeTeam', 'season_start'], right_on=['team_home', 'season_home']
     )
     
 
     # Merge away team data
     df = df.merge(
-        player_data, how='left', left_on=['AwayTeam', 'season_start'], right_on=['Club', 'season_start'],
-        suffixes=('', '_away')
+        player_data_away, how='left', left_on=['AwayTeam', 'season_start'], right_on=['team_away', 'season_away']
     )
 
 
     #[[TODO]] Drop redundant columns
-    df = df.drop(columns=['Home', 'Away','Wk'])
+    df = df.drop(columns=['Club', 'season_home','team_home', 'season_away', 'team_away'])
 
-    pd.to_csv(df, 'sup data/merged_data.csv', index=False)
+    df.to_csv('sup data/merged_data.csv', index=False)

@@ -116,26 +116,7 @@ if __name__ == "__main__":
     df_football_data = pd.concat(all_seasons, join='outer', ignore_index=False)        
     df_football_data.to_csv(f"sup data/all_seasons_data.csv", index=True)
 
-    # Fetch all seasons from FBref and save csv
-    all_seasons = []
-    for season in range(2015, 2026):  # inclusive of 2025
-        print(f"Fetching data for {season} season...")
-        try:
-            df = get_fbref_table(
-                league="ENG-Premier League",
-                season=season,
-                scope="player_season",
-                stat_type="standard",
-            )
-            df["season"] = season  # add season column
-            all_seasons.append(df)
-        except Exception as e:
-            print(f"Skipping {season} due to error: {e}")
-
-    # Combine all into one DataFrame
-    current = pd.concat(all_seasons, join='outer', ignore_index=False)
-    current.to_csv("sup data/fbref_player_season_stats_2015-2025.csv", index=True)
-
+    # Fetch Premier League team season schedule with xG from FBref for all seasons 2015-2025
     all_seasons = []
     for season in range(2015, 2026):  # inclusive of 2025
         print(f"Fetching data for {season} season...")
