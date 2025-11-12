@@ -119,17 +119,18 @@ if __name__ == "__main__":
     # Fetch Premier League team season schedule with xG from FBref for all seasons 2015-2025
     all_seasons = []
     for season in range(2015, 2026):  # inclusive of 2025
-        print(f"Fetching data for {season} season...")
+        season_id = f"{str(season)[-2:]}-{str(season + 1)[-2:]}"
+        print(f"Fetching data for {season_id} season...")
         try:
             df = get_fbref_table(
                 league="ENG-Premier League",
-                season=season,
+                season=season_id,
                 scope="schedule"
             )
             df["season"] = season  # add season column
             all_seasons.append(df)
         except Exception as e:
-            print(f"Skipping {season} due to error: {e}")
+            print(f"Skipping {season_id} due to error: {e}")
     # Combine all into one DataFrame
     team_season = pd.concat(all_seasons, join='outer', ignore_index=False)
     team_season.to_csv("sup data/fbref_team_season_schedule_with_xg.csv", index=True)
