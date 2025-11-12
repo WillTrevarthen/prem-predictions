@@ -7,18 +7,19 @@ from sklearn.impute import SimpleImputer
 def get_player_stats():
     all_seasons = []
     for season in range(2015, 2026):  # inclusive of 2025
-        print(f"Fetching data for {season} season...")
+        season_id = f"{str(season)[-2:]}-{str(season + 1)[-2:]}"  # inclusive of 2025
+        print(f"Fetching data for {season_id} season...")
         try:
             df = get_fbref_table(
                 league="ENG-Premier League",
-                season=season,
+                season=season_id,
                 scope="player_season",
                 stat_type="standard",
             )
             df["season"] = season  # add season column
             all_seasons.append(df)
         except Exception as e:
-            print(f"Skipping {season} due to error: {e}")
+            print(f"Skipping {season_id} due to error: {e}")
     # Combine all into one DataFrame
     current = pd.concat(all_seasons, ignore_index=False)
     return current
