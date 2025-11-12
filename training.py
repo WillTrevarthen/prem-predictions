@@ -12,7 +12,9 @@ from sklearn.calibration import CalibratedClassifierCV
 
 def main():
     df = pd.read_csv('training.csv')
-    
+    # df = df[~((df['Date'] >= '2020-03-01') & (df['Date'] <= '2021-08-01'))]
+
+
     df = df.sort_values(['season_start', 'Date'])
 
     df = df.drop(columns=['data_type', 'Date'])
@@ -45,7 +47,7 @@ def main():
     season_weights = train_df["season_start"].map(season_weight_map)
 
 
-    # 2) Class weights (per label H/D/A encoded)
+    # # 2) Class weights (per label H/D/A encoded)
     classes = np.unique(y_train)
     class_weights = compute_class_weight(
         class_weight='balanced',
@@ -65,14 +67,14 @@ def main():
     # Initialize XGBoost
     xgb = XGBClassifier(
         objective="multi:softmax",
-        n_estimators=100, #200
-        max_depth=3, #5
+        n_estimators=100,
+        max_depth=5, #5
         num_class=len(classes),
-        min_child_weight=5, #1
-        gamma = 0.3, #0.3
-        learning_rate=0.01,
-        subsample=0.6,
-        colsample_bytree=0.8, #0.8
+        min_child_weight=3, #3
+        gamma = 0.1, #0.1
+        learning_rate=0.05,#0.05
+        subsample=0.8, #0.8
+        colsample_bytree=0.6, #0.6
         random_state=42,
         n_jobs=-1,
         use_label_encoder=False,
@@ -135,41 +137,41 @@ def main():
     with open("xgb_model.pkl", "wb") as f:
         pickle.dump(xgb, f)
 
-    # Load dataset
-    # df = pd.read_csv('training.csv')
-    # Sort by season and date to maintain chronological order
+    # # Load dataset
+    # # df = pd.read_csv('training.csv')
+    # # Sort by season and date to maintain chronological order
 
-    # Initialize Random Forest with balanced class weights
-    rf = RandomForestClassifier(
-        n_estimators=300,
-        max_depth= None,
-        max_features='sqrt',
-        min_samples_split=8,      # start here for your imbalance
-        min_samples_leaf=3,       # optional, also helps minority class
-        class_weight= {0:1, 1:4, 2:1},  
-        random_state=42,
-        n_jobs=-1
-    )
+    # # Initialize Random Forest with balanced class weights
+    # rf = RandomForestClassifier(
+    #     n_estimators=300,
+    #     max_depth= None,
+    #     max_features='sqrt',
+    #     min_samples_split=8,      # start here for your imbalance
+    #     min_samples_leaf=3,       # optional, also helps minority class
+    #     class_weight= {0:1, 1:4, 2:1},  
+    #     random_state=42,
+    #     n_jobs=-1
+    # )
 
-    # Train the model
-    rf.fit(X_train, y_train) # eval
+    # # Train the model
+    # rf.fit(X_train, y_train) # eval
     
-    # Predict on test set for eval
-    y_pred = rf.predict(X_test)
+    # # Predict on test set for eval
+    # y_pred = rf.predict(X_test)
 
-    # Evaluate
-    accuracy = accuracy_score(y_test, y_pred)
-    print(f"Accuracy: {accuracy:.4f}\n")
+    # # Evaluate
+    # accuracy = accuracy_score(y_test, y_pred)
+    # print(f"Accuracy: {accuracy:.4f}\n")
 
-    print("Classification Report:")
-    print(classification_report(y_test, y_pred))
+    # print("Classification Report:")
+    # print(classification_report(y_test, y_pred))
 
-    print("Confusion Matrix:")
-    print(confusion_matrix(y_test, y_pred))
-    rf.fit(X,y)
-    # Save the trained model to a file
-    with open("rf_model.pkl", "wb") as f:
-        pickle.dump(rf, f)
+    # print("Confusion Matrix:")
+    # print(confusion_matrix(y_test, y_pred))
+    # rf.fit(X,y)
+    # # Save the trained model to a file
+    # with open("rf_model.pkl", "wb") as f:
+    #     pickle.dump(rf, f)
 
     # # --- stacking ensemble ---
 
@@ -247,7 +249,7 @@ def main():
 
 
 
-    # # # Define the parameter grid
+    # # Define the parameter grid
     # param_grid = {
     #     "n_estimators": [100, 200, 300, 500],
     #     "max_depth": [3, 5, 7, 9],
