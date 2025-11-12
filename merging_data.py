@@ -143,7 +143,7 @@ if __name__ == "__main__":
     df['day'] = df['Date'].dt.dayofweek
 
     df['season_start'] = np.where(
-        df['month'] > 6,
+        df['month'] >= 8,
         df['year'],
         (df['year'] - 1)
     )
@@ -204,5 +204,6 @@ if __name__ == "__main__":
 
     #[[TODO]] Drop redundant columns
     df = df.drop(columns=['Club', 'season_home','team_home', 'season_away', 'team_away'])
+    df.drop_duplicates(inplace=True)
 
     df.to_csv('sup data/merged_data.csv', index=False)
