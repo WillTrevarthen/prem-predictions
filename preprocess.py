@@ -52,7 +52,7 @@ TEAM_MAPPING = {
 
 def collate_data():
     # Define the folder path containing the CSV files
-    folder_path = '/Users/willtrevarthen/prem-predictions/data'
+    folder_path = 'prem-predictions/data'
 
     # Use glob to find all CSV files in the folder
     csv_files = glob.glob(os.path.join(folder_path, '*.csv'))

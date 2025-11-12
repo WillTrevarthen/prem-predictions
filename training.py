@@ -1,6 +1,6 @@
 import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.model_selection import train_test_split, StratifiedKFold
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, roc_auc_score
 from xgboost import XGBClassifier
 import pickle
 from sklearn.model_selection import RandomizedSearchCV
@@ -9,6 +9,9 @@ import numpy as np
 from sklearn.utils.class_weight import compute_class_weight
 from sklearn.ensemble import RandomForestClassifier, StackingClassifier
 from sklearn.calibration import CalibratedClassifierCV
+import optuna
+from optuna.samplers import TPESampler
+
 
 def main():
     df = pd.read_csv('training.csv')
@@ -34,6 +37,12 @@ def main():
 
     X_test = test_df.drop(columns=['ft_result_encoded'])
     y_test = test_df['ft_result_encoded']
+
+    X_train = X_train.reset_index(drop=True)
+    X_test  = X_test.reset_index(drop=True)
+    y_train = y_train.reset_index(drop=True)
+    y_test  = y_test.reset_index(drop=True)
+
     
     # Compute class weights
     linear_step = 0.02  # each newer season gets +0.2 higher weight
@@ -61,6 +70,79 @@ def main():
 
     # (optional but nice) normalise so average weight ≈ 1
     sample_weights = sample_weights / sample_weights.mean()
+
+    def objective(trial):
+        booster = trial.suggest_categorical("booster", ["gbtree", "dart", "gblinear"])
+
+        # Common params
+        params = {
+            "objective": "multi:softprob",
+            "eval_metric": "mlogloss",
+            "num_class": len(classes),
+            "booster": booster,
+            "learning_rate": trial.suggest_float("learning_rate", 1e-3, 0.3, log=True),
+            "lambda": trial.suggest_float("lambda", 1e-8, 10.0, log=True),
+            "alpha": trial.suggest_float("alpha", 1e-8, 10.0, log=True),
+            "n_estimators": trial.suggest_int("n_estimators", 200, 2000),
+            "random_state": 42,
+            "tree_method": "hist",   # fast & stable on CPU; use "gpu_hist" if on GPU
+        }
+
+        if booster in ["gbtree", "dart"]:
+            params.update({
+                "max_depth": trial.suggest_int("max_depth", 3, 10),
+                "min_child_weight": trial.suggest_int("min_child_weight", 1, 10),
+                "subsample": trial.suggest_float("subsample", 0.5, 1.0),
+                "colsample_bytree": trial.suggest_float("colsample_bytree", 0.5, 1.0),
+                "gamma": trial.suggest_float("gamma", 0.0, 5.0),
+            })
+        if booster == "dart":
+            params.update({
+                "rate_drop": trial.suggest_float("rate_drop", 0.0, 0.3),
+                "skip_drop": trial.suggest_float("skip_drop", 0.0, 0.3),
+            })
+
+        # 3-fold stratified CV with early stopping
+        skf = StratifiedKFold(n_splits=3, shuffle=True, random_state=42)
+        aucs = []
+        for tr_idx, va_idx in skf.split(X_train, y_train):
+            X_tr, X_va = X_train.iloc[tr_idx], X_train.iloc[va_idx]
+            y_tr, y_va = y_train.iloc[tr_idx], y_train.iloc[va_idx]
+
+            model = XGBClassifier(**params)
+            model.fit(
+                X_tr, y_tr,
+                eval_set=[(X_va, y_va)],
+                verbose=False,
+            )
+            proba = model.predict_proba(X_va)  # shape [n_samples, n_classes]
+            fold_auc = roc_auc_score(y_va, proba, multi_class="ovo", average="macro")
+            aucs.append(fold_auc)
+        return float(np.mean(aucs))
+
+    study = optuna.create_study(
+        direction="maximize",  # maximize AUC
+        sampler=TPESampler(seed=42)
+    )
+    """
+    study.optimize(objective, n_trials=50, show_progress_bar=True) #hyper param optimisation needs some work
+    """
+    print("Best trial:")
+    trial = study.best_trial
+    print(f"  AUC: {trial.value:.4f}")
+    print("  Params:")
+    for k, v in trial.params.items():
+        print(f"    {k}: {v}")
+
+    # (optional) visualize tuning history
+    try:
+        optuna.visualization.plot_optimization_history(study).show()
+    except Exception:
+        pass
+
+    best_params = trial.params
+    best_model = XGBClassifier(**best_params, random_state=42, use_label_encoder=False)
+    best_model.fit(X, y)
 
     # Initialize XGBoost
     xgb = XGBClassifier(
