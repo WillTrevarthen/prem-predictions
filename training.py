@@ -23,7 +23,7 @@ def main():
     y = df['ft_result_encoded']
 
     # Define how many most recent matches to use as test set
-    n_test = 100
+    n_test = 200
 
     # Split into training and test sets (most recent n_test matches)
     train_df = df.iloc[:-n_test]
@@ -87,6 +87,23 @@ def main():
     # Predict
     y_pred = xgb.predict(X_test)
 
+    #---------------non-conf-scores---------
+    # Probabilities for each class
+    y_proba = xgb.predict_proba(X_test)
+
+    # Probability assigned to the TRUE class for each row
+    y_true = y_test.values
+    true_class_probs = y_proba[np.arange(len(y_true)), y_true]
+
+    # Per-sample nonconformity = -log P(true class)
+    nonconformity_scores = -np.log(true_class_probs + 1e-12)  # epsilon for numerical safety
+
+    # 90th percentile threshold
+    threshold_90 = np.percentile(nonconformity_scores, 90)
+    print(f"\n90th percentile nonconformity threshold: {threshold_90:.6f}")
+    with open("xgb_nonconformity_threshold.pkl", "wb") as f:
+        pickle.dump(threshold_90, f)
+    #---------------------------------------
     # Evaluate
     accuracy = accuracy_score(y_test, y_pred)
     print(f"Accuracy: {accuracy:.4f}\n")
