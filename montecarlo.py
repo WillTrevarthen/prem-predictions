@@ -1,8 +1,5 @@
 import numpy as np
 import pandas as pd
-
-import numpy as np
-import pandas as pd
 from ast import literal_eval
 import json
 
@@ -10,18 +7,24 @@ def run_monte_carlo_conformal(
     fixtures_df: pd.DataFrame,
     n_sims: int = 10_000,
     seed: int = 42,
-    starting_points: dict | None = None,
+    starting_points: dict | None = None,   # optional {team_id: total_points_before}
     predset_col: str = "prediction_set_map",
     home_col: str | None = None,
     away_col: str | None = None,
+    # Preferred total-points-before columns (from simulate_season_predictions)
+    home_total_before_col: str = "home_total_points_before",
+    away_total_before_col: str = "away_total_points_before",
+    # Fallback venue-only cumulatives (used only if totals not available)
+    home_pts_before_col: str = "home_points_cum",
+    away_pts_before_col: str = "away_points_cum",
 ):
     rng = np.random.default_rng(seed)
     df = fixtures_df.copy()
 
     # --- auto-detect home/away columns if not provided ---
     if home_col is None or away_col is None:
-        candidates_home = ["home_team_encoded", "home_team_id", "home_id", "HomeTeamId", "home_team"]
-        candidates_away = ["away_team_encoded", "away_team_id", "away_id", "AwayTeamId", "away_team"]
+        candidates_home = ["home_team_encoded", "home_team_id", "home_id", "HomeTeamId", "home_team", "HomeTeam"]
+        candidates_away = ["away_team_encoded", "away_team_id", "away_id", "AwayTeamId", "away_team", "AwayTeam"]
         home_col = next((c for c in candidates_home if c in df.columns), home_col)
         away_col = next((c for c in candidates_away if c in df.columns), away_col)
 
@@ -31,42 +34,31 @@ def run_monte_carlo_conformal(
 
     # --- parse/validate prediction_set_map -> dict[label]->prob ---
     def ensure_predset_dict(x):
-        # already a dict
         if isinstance(x, dict):
             d = x
-        # try Python-literal format: "{'H': 1.0, 'D': 0.0}"
         elif isinstance(x, str):
             s = x.strip()
             try:
                 d = literal_eval(s)
             except Exception:
-                # try JSON (double quotes)
-                try:
-                    d = json.loads(s.replace("'", '"'))
-                except Exception as e:
-                    raise ValueError(f"Cannot parse prediction_set_map value: {s!r}") from e
+                d = json.loads(s.replace("'", '"'))
         else:
-            raise ValueError(f"prediction_set_map cell has unsupported type: {type(x)}")
+            raise ValueError(f"{predset_col} cell has unsupported type: {type(x)}")
 
-        # coerce keys/values and filter to valid labels
         valid = {"H", "D", "A"}
         d = {str(k): float(v) for k, v in d.items() if str(k) in valid}
-
         if not d:
             raise ValueError(f"Empty/invalid prediction set after parsing: {x!r}")
 
-        # fix negatives/NaNs and re-normalize
         vals = np.array(list(d.values()), dtype=float)
         vals[~np.isfinite(vals)] = 0.0
         vals = np.clip(vals, 0.0, None)
         ssum = vals.sum()
         if ssum <= 0:
-            # fallback: put all mass on the most likely key found originally
             topk = next(iter(d.keys()))
             d = {topk: 1.0}
         else:
-            vals = vals / ssum
-            d = dict(zip(d.keys(), vals.tolist()))
+            d = dict(zip(d.keys(), (vals / ssum).tolist()))
         return d
 
     df[predset_col] = df[predset_col].apply(ensure_predset_dict)
@@ -81,22 +73,62 @@ def run_monte_carlo_conformal(
     away_idx = df[away_col].map(team_to_idx).to_numpy()
     M = len(df)
 
-    # --- initial points ---
+    # --- starting points ---
+    if starting_points is None:
+        derived = {}
+
+        # Preferred: totals produced by simulate_season_predictions
+        if (home_total_before_col in df.columns) and (away_total_before_col in df.columns):
+            # Take the first time each team appears as home and as away, then sum
+            first_home_totals = (
+                df.groupby(home_col, sort=False)[home_total_before_col]
+                  .first()
+                  .astype(float)
+            )
+            first_away_totals = (
+                df.groupby(away_col, sort=False)[away_total_before_col]
+                  .first()
+                  .astype(float)
+            )
+            summed = first_home_totals.add(first_away_totals, fill_value=0.0)
+            derived = summed.reindex(teams, fill_value=0.0).to_dict()
+
+        # Fallback: venue-only cumulatives; sum first-home + first-away cumulatives
+        elif (home_pts_before_col in df.columns) and (away_pts_before_col in df.columns):
+            first_home = (
+                df.groupby(home_col, sort=False)[home_pts_before_col]
+                  .first()
+                  .astype(float)
+            )
+            first_away = (
+                df.groupby(away_col, sort=False)[away_pts_before_col]
+                  .first()
+                  .astype(float)
+            )
+            summed = first_home.add(first_away, fill_value=0.0)
+            derived = summed.reindex(teams, fill_value=0.0).to_dict()
+
+        else:
+            derived = {t: 0.0 for t in teams}
+
+        starting_points = derived
+
+    # --- initial points matrix ---
     pts = np.zeros((n_sims, n_teams), dtype=float)
     if starting_points:
         for t, p in starting_points.items():
             if t in team_to_idx:
-                pts[:, team_to_idx[t]] = p
+                pts[:, team_to_idx[t]] = float(p)
 
+    # --- simulate each match across all sims ---
     code = {'H': 0, 'D': 1, 'A': 2}
     sim_idx = np.arange(n_sims)
 
-    # --- simulate each match across all sims ---
     for m in range(M):
         ps_map = df.iloc[m][predset_col]          # dict like {'H':0.7,'D':0.3}
         labels = list(ps_map.keys())
         probs  = np.array([ps_map[k] for k in labels], dtype=float)
-        probs = probs / probs.sum()                # just in case
+        probs = probs / probs.sum()
         outcome_codes = np.array([code[lbl] for lbl in labels], dtype=int)
 
         draws = rng.choice(outcome_codes, size=n_sims, p=probs)
@@ -142,6 +174,8 @@ def run_monte_carlo_conformal(
     return out.sort_values("expected_rank").reset_index(drop=True)
 
 
+
+
 if __name__ == "__main__":
 
     df = pd.read_csv("results/GW12 test/season_predictions.csv")
@@ -153,7 +187,7 @@ if __name__ == "__main__":
         n_sims=10_000,
         seed=7,
         starting_points=None,  # or {team_id: current_points}
-        predset_col="prediction_set_map",
+        predset_col="no_cp_prob_set",
         home_col="HomeTeam",
         away_col="AwayTeam",
     )
