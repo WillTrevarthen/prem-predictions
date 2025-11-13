@@ -184,7 +184,7 @@ if __name__ == "__main__":
     # and must include a `prediction_set_map` column (dict per row).
     dist_df = run_monte_carlo_conformal(
         fixtures_df=df,
-        n_sims=10_000,
+        n_sims=500_000,
         seed=7,
         starting_points=None,  # or {team_id: current_points}
         predset_col="no_cp_prob_set",
