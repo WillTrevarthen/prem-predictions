@@ -9,6 +9,8 @@ import numpy as np
 from sklearn.utils.class_weight import compute_class_weight
 from sklearn.ensemble import RandomForestClassifier, StackingClassifier
 from sklearn.calibration import CalibratedClassifierCV
+from sklearn.preprocessing import label_binarize
+from sklearn.metrics import roc_auc_score, roc_curve
 
 def main():
     df = pd.read_csv('training.csv')
@@ -86,6 +88,50 @@ def main():
 
     # Predict
     y_pred = xgb.predict(X_test)
+
+
+    #--------------ROC-AUC score------------
+    y_proba = xgb.predict_proba(X_test)  # shape: [n_samples, n_classes]
+
+    # Align class order for binarization with the classifier's internal order
+    class_order = list(xgb.classes_)  # works for XGBClassifier wrapper
+
+    # Binarize true labels to one-vs-rest format
+    y_true_bin = label_binarize(y_test, classes=class_order)  # shape: [n_samples, n_classes]
+
+    # --- 3) Compute ROC-AUCs ---
+    macro_auc = roc_auc_score(y_true_bin, y_proba, average="macro", multi_class="ovr")
+    weighted_auc = roc_auc_score(y_true_bin, y_proba, average="weighted", multi_class="ovr")
+
+    # Per-class AUC
+    per_class_auc = {}
+    for i, cls in enumerate(class_order):
+        per_class_auc[cls] = roc_auc_score(y_true_bin[:, i], y_proba[:, i])
+
+    # Full ROC curves for each class (for plotting later)
+    roc_curves = {}
+    for i, cls in enumerate(class_order):
+        fpr, tpr, thr = roc_curve(y_true_bin[:, i], y_proba[:, i])
+        roc_curves[cls] = {
+            "fpr": fpr,
+            "tpr": tpr,
+            "thresholds": thr
+        }
+
+    # --- 4) Bundle results and pickle for later visualisations ---
+    roc_bundle = {
+        "classes": class_order,
+        "macro_auc": macro_auc,
+        "weighted_auc": weighted_auc,
+        "per_class_auc": per_class_auc,
+        "roc_curves": roc_curves,
+    }
+
+    with open("roc_auc_bundle.pkl", "wb") as f:
+        pickle.dump(roc_bundle, f)
+
+    print(f"Saved ROC data. Macro AUC={macro_auc:.4f}, Weighted AUC={weighted_auc:.4f}")
+    #---------------------------------------
 
     #---------------non-conf-scores---------
     # Probabilities for each class
