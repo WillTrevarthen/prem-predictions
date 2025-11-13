@@ -2,15 +2,15 @@ import pandas as pd
 import numpy as np
 import pickle
 
-
 def simulate_season_predictions(
-    df,
+    df: pd.DataFrame,
     model,
     feature_cols,
     result_encoder=None,
     date_col=None,
-    training_df=None,
-    h2h_N=5,
+    training_df: pd.DataFrame | None = None,
+    nll_threshold: float | None = None,   # set to your 90th percentile NLL threshold
+    epsilon: float = 1e-12,               # numerical safety for logs
 ):
     """
     Simulate a season chronologically and predict each game, updating:
@@ -18,13 +18,16 @@ def simulate_season_predictions(
       - home/away cumulative points (home_points_cum / away_points_cum)
       - home/away home-only win/losing streaks
       - home/away total win/losing streaks
-      - H2H last-N counts
+      - (optionally) seed state from training_df's TRUE past results
 
-    State (points, streaks, H2H) is seeded from `training_df`:
-      - only for the seasons present in `df`
-      - only for matches BEFORE the first inference match in that season.
+    Adds:
+      - prob_home_win / prob_draw / prob_away_win
+      - per-class nonconformity scores (NLL): nll_home / nll_draw / nll_away
+      - conformal prediction set columns:
+          * prediction_set_labels (list[str])
+          * prediction_set_probs  (list[float], normalized within the set)
+          * prediction_set_map    (dict[label->normalized prob])
     """
-
     df = df.copy()
 
     # --- Sort inference block by season + date ---
@@ -44,22 +47,22 @@ def simulate_season_predictions(
     home_home_win_dict, home_home_loss_dict = {}, {}
     away_away_win_dict, away_away_loss_dict = {}, {}
     total_win_streak_dict, total_loss_streak_dict = {}, {}
-    # h2h_history = {}
 
     # --- Helper: update dicts after a result (true or predicted) ---
-    def update_dicts(season, h_team, a_team, result):
+    def update_dicts(season, h_team, a_team, result_label: str):
+        """result_label in {'H','D','A'}"""
         h_key, a_key = (season, h_team), (season, a_team)
 
         # Points
         h_pts = home_points_dict.get(h_key, 0)
         a_pts = away_points_dict.get(a_key, 0)
-        if result == "H":
+        if result_label == "H":
             home_points_dict[h_key] = h_pts + 3
             away_points_dict[a_key] = a_pts
-        elif result == "A":
+        elif result_label == "A":
             home_points_dict[h_key] = h_pts
             away_points_dict[a_key] = a_pts + 3
-        elif result == "D":
+        else:  # "D"
             home_points_dict[h_key] = h_pts + 1
             away_points_dict[a_key] = a_pts + 1
 
@@ -73,33 +76,27 @@ def simulate_season_predictions(
         a_total_win = total_win_streak_dict.get(a_key, 0)
         a_total_loss = total_loss_streak_dict.get(a_key, 0)
 
-        if result == "H":
+        if result_label == "H":
             home_home_win_dict[h_key] = h_home_win + 1
             home_home_loss_dict[h_key] = 0
-
             away_away_loss_dict[a_key] = a_away_loss + 1
             away_away_win_dict[a_key] = 0
-
             total_win_streak_dict[h_key] = h_total_win + 1
             total_loss_streak_dict[h_key] = 0
-
             total_loss_streak_dict[a_key] = a_total_loss + 1
             total_win_streak_dict[a_key] = 0
 
-        elif result == "A":
+        elif result_label == "A":
             away_away_win_dict[a_key] = a_away_win + 1
             away_away_loss_dict[a_key] = 0
-
             home_home_loss_dict[h_key] = h_home_loss + 1
             home_home_win_dict[h_key] = 0
-
             total_win_streak_dict[a_key] = a_total_win + 1
             total_loss_streak_dict[a_key] = 0
-
             total_loss_streak_dict[h_key] = h_total_loss + 1
             total_win_streak_dict[h_key] = 0
 
-        else:  # Draw
+        else:  # "D"
             home_home_win_dict[h_key] = 0
             home_home_loss_dict[h_key] = 0
             away_away_win_dict[a_key] = 0
@@ -109,35 +106,19 @@ def simulate_season_predictions(
             total_win_streak_dict[a_key] = 0
             total_loss_streak_dict[a_key] = 0
 
-        # H2H history (orientation-specific)
-        # h2h_key = (season, h_team, a_team)
-        # h2h_history.setdefault(h2h_key, []).append(result)
-
-    # --- Seed state from training_df (true results only) ---
+    # --- Seed state from training_df (TRUE results before inference) ---
     if training_df is not None and result_encoder is not None:
         past_df = training_df.copy()
-
-        # Restrict to the same seasons as inference
         seasons_in_inf = df["season_start"].unique()
         past_df = past_df[past_df["season_start"].isin(seasons_in_inf)].copy()
 
         if date_col and date_col in past_df.columns and date_col in df.columns:
-            past_df[date_col] = pd.to_datetime(
-                past_df[date_col], dayfirst=True, errors="coerce"
-            )
-            df_dates = pd.to_datetime(
-                df[date_col], dayfirst=True, errors="coerce"
-            )
-
-            # earliest inference date per season
+            past_df[date_col] = pd.to_datetime(past_df[date_col], dayfirst=True, errors="coerce")
+            df_dates = pd.to_datetime(df[date_col], dayfirst=True, errors="coerce")
             first_inf_by_season = (
-                df.assign(_date=df_dates)
-                  .groupby("season_start")["_date"]
-                  .min()
-                  .to_dict()
+                df.assign(_date=df_dates).groupby("season_start")["_date"].min().to_dict()
             )
 
-            # keep only past games BEFORE earliest inference match in that season
             def is_before_inference(r):
                 season = r["season_start"]
                 cutoff = first_inf_by_season.get(season, None)
@@ -146,44 +127,35 @@ def simulate_season_predictions(
                 return r[date_col] < cutoff
 
             past_df = past_df[past_df.apply(is_before_inference, axis=1)]
-
             past_df = past_df.sort_values(["season_start", date_col])
         else:
             past_df = past_df.sort_values(["season_start"])
 
-        # Replay past matches
+        # Replay past matches to seed points/streaks
         if "ft_result_encoded" in past_df.columns:
-            for _, row in past_df.iterrows():
-                if pd.isna(row.get("ft_result_encoded")):
+            for _, r in past_df.iterrows():
+                if pd.isna(r.get("ft_result_encoded")):
                     continue
-                season = row["season_start"]
-                h_team = row["home_team_encoded"]
-                a_team = row["away_team_encoded"]
-                result = result_encoder.inverse_transform(
-                    [int(row["ft_result_encoded"])]
-                )[0]
-                update_dicts(season, h_team, a_team, result)
+                season = r["season_start"]
+                h_team = r["home_team_encoded"]
+                a_team = r["away_team_encoded"]
+                true_label = result_encoder.inverse_transform([int(r["ft_result_encoded"])])[0]
+                update_dicts(season, h_team, a_team, true_label)
 
         print(f"Seeded state from {len(past_df)} past games (matching seasons + before inference)")
 
     # --- Storage for dynamic features + predictions ---
-    home_points_before = []
-    away_points_before = []
-    home_home_win_streaks = []
-    home_home_loss_streaks = []
-    away_away_win_streaks = []
-    away_away_loss_streaks = []
-    home_total_win_streaks = []
-    home_total_loss_streaks = []
-    away_total_win_streaks = []
-    away_total_loss_streaks = []
-    # h2h_home_wins_lastN = []
-    # h2h_away_wins_lastN = []
-    # h2h_draws_lastN = []
+    home_points_before, away_points_before = [], []
+    home_home_win_streaks, home_home_loss_streaks = [], []
+    away_away_win_streaks, away_away_loss_streaks = [], []
+    home_total_win_streaks, home_total_loss_streaks = [], []
+    away_total_win_streaks, away_total_loss_streaks = [], []
     preds_int = []
-    prob_home_list = []
-    prob_draw_list = []
-    prob_away_list = []
+    prob_home_list, prob_draw_list, prob_away_list = [], [], []
+
+    # NEW: per-class NLLs + prediction set storage
+    nll_home_list, nll_draw_list, nll_away_list = [], [], []
+    pred_set_labels_list, pred_set_probs_list, pred_set_map_list = [], [], []
 
     # --- Main simulation loop over inference fixtures ---
     for _, row in df.iterrows():
@@ -204,14 +176,6 @@ def simulate_season_predictions(
         a_total_win = total_win_streak_dict.get(a_key, 0)
         a_total_loss = total_loss_streak_dict.get(a_key, 0)
 
-        # H2H BEFORE this game
-        # h2h_key = (season, h_team, a_team)
-        # past_results = h2h_history.get(h2h_key, [])
-        # recent = past_results[-h2h_N:]
-        # hwins = sum(1 for r in recent if r == "H")
-        # awins = sum(1 for r in recent if r == "A")
-        # draws = sum(1 for r in recent if r == "D")
-
         # Record state (for output)
         home_points_before.append(h_pts)
         away_points_before.append(a_pts)
@@ -223,9 +187,6 @@ def simulate_season_predictions(
         home_total_loss_streaks.append(h_total_loss)
         away_total_win_streaks.append(a_total_win)
         away_total_loss_streaks.append(a_total_loss)
-        # h2h_home_wins_lastN.append(hwins)
-        # h2h_away_wins_lastN.append(awins)
-        # h2h_draws_lastN.append(draws)
 
         # Build feature vector for this match
         feat_vals = []
@@ -250,33 +211,64 @@ def simulate_season_predictions(
                 feat_vals.append(a_total_win)
             elif col == "away_total_losing_streak":
                 feat_vals.append(a_total_loss)
-            # elif col == "h2h_home_wins_lastN":
-            #     feat_vals.append(hwins)
-            # elif col == "h2h_away_wins_lastN":
-            #     feat_vals.append(awins)
-            # elif col == "h2h_draws_lastN":
-            #     feat_vals.append(draws)
             else:
                 feat_vals.append(row[col] if col in df.columns else np.nan)
 
         X = np.array(feat_vals, dtype=float).reshape(1, -1)
 
-        # Predict probabilities & class
-        probs = model.predict_proba(X)[0]
-        prob_home, prob_draw, prob_away = probs[0], probs[1], probs[2]
-        pred_int = int(np.argmax(probs))
+        # ---------- Predict probabilities & decode class labels robustly ----------
+        probs = model.predict_proba(X)[0]                        # shape (n_classes,)
+        model_classes = getattr(model, "classes_", np.arange(len(probs)))
+
+        if result_encoder is not None:
+            decoded_labels = result_encoder.inverse_transform(model_classes)
+        else:
+            fallback = {0: "H", 1: "D", 2: "A"}
+            decoded_labels = np.array([fallback[int(c)] for c in model_classes])
+
+        # map label -> prob
+        label_prob_map = {lbl: float(p) for lbl, p in zip(decoded_labels, probs)}
+        prob_home = label_prob_map.get("H", 0.0)
+        prob_draw = label_prob_map.get("D", 0.0)
+        prob_away = label_prob_map.get("A", 0.0)
 
         prob_home_list.append(prob_home)
         prob_draw_list.append(prob_draw)
         prob_away_list.append(prob_away)
-        preds_int.append(pred_int)
 
-        # Decode label
-        if result_encoder is not None:
-            pred_label = result_encoder.inverse_transform([pred_int])[0]
+        # predicted class (encoded + string)
+        argmax_idx = int(np.argmax(probs))
+        pred_label = decoded_labels[argmax_idx]
+        preds_int.append(int(model_classes[argmax_idx]))
+        # ------------------------------------------------------------------------
+
+        # ---------- per-class NLL and conformal prediction set ----------
+        eps = max(epsilon, 1e-12)
+        nlls = -np.log(np.clip(probs, eps, 1.0))                 # aligned with decoded_labels
+        nll_by_label = {lbl: float(nll) for lbl, nll in zip(decoded_labels, nlls)}
+        nll_home_list.append(nll_by_label.get("H", np.nan))
+        nll_draw_list.append(nll_by_label.get("D", np.nan))
+        nll_away_list.append(nll_by_label.get("A", np.nan))
+
+        if nll_threshold is not None:
+            mask = nlls <= nll_threshold
+            if not np.any(mask):
+                mask = np.zeros_like(mask, dtype=bool)
+                mask[argmax_idx] = True
         else:
-            mapping = {0: "H", 1: "D", 2: "A"}
-            pred_label = mapping[pred_int]
+            mask = np.zeros_like(probs, dtype=bool)
+            mask[argmax_idx] = True
+
+        set_idxs = np.where(mask)[0]
+        set_labels = [decoded_labels[i] for i in set_idxs]
+        set_probs_raw = probs[set_idxs]
+        denom = set_probs_raw.sum()
+        set_probs_norm = (set_probs_raw / denom) if denom > 0 else np.ones_like(set_probs_raw) / max(len(set_probs_raw), 1)
+
+        pred_set_labels_list.append(set_labels)
+        pred_set_probs_list.append(set_probs_norm.tolist())
+        pred_set_map_list.append({lbl: float(p) for lbl, p in zip(set_labels, set_probs_norm)})
+        # ------------------------------------------------------------------------
 
         # Update state with predicted result
         update_dicts(season, h_team, a_team, pred_label)
@@ -296,18 +288,23 @@ def simulate_season_predictions(
     df["home_total_losing_streak"] = home_total_loss_streaks
     df["away_total_win_streak"] = away_total_win_streaks
     df["away_total_losing_streak"] = away_total_loss_streaks
-    # df["h2h_home_wins_lastN"] = h2h_home_wins_lastN
-    # df["h2h_away_wins_lastN"] = h2h_away_wins_lastN
-    # df["h2h_draws_lastN"] = h2h_draws_lastN
 
     df["prob_home_win"] = prob_home_list
     df["prob_draw"] = prob_draw_list
     df["prob_away_win"] = prob_away_list
-    df["predicted_confidence"] = df[
-        ["prob_home_win", "prob_draw", "prob_away_win"]
-    ].max(axis=1)
+    df["predicted_confidence"] = df[["prob_home_win", "prob_draw", "prob_away_win"]].max(axis=1)
+
+    # per-class NLLs + conformal set
+    df["nll_home"] = nll_home_list
+    df["nll_draw"] = nll_draw_list
+    df["nll_away"] = nll_away_list
+    df["prediction_set_labels"] = pred_set_labels_list
+    df["prediction_set_probs"] = pred_set_probs_list
+    df["prediction_set_map"] = pred_set_map_list
 
     return df
+
+
 
 
 def compute_base_table_from_training(train, result_encoder, team_encoder, seasons_to_use):
@@ -398,15 +395,18 @@ def main():
         c for c in train.columns if c not in ["ft_result_encoded", "data_type", "Date"]
     ]
 
+    with open("xgb_nonconformity_threshold.pkl", "rb") as f:
+        nll_threshold = pickle.load(f)
+
     # --- Simulate remaining fixtures (inference) ---
     pred_df = simulate_season_predictions(
         inference_df,
-        calibrated_xgb, #xgb_model
+        xgb_model, #xgb_model
         feature_cols,
         result_encoder=result_encoder,
         date_col="Date",
         training_df=train,
-        h2h_N=5
+        nll_threshold=nll_threshold,   # <<< pass the loaded threshold
     )
 
     # Decode team names
@@ -437,13 +437,34 @@ def main():
             "prob_home_win",
             "prob_draw",
             "prob_away_win",
+            "nll_home",
+            "nll_draw",
+            "nll_away",
+            "prediction_set_labels",           # list of labels included by threshold
+            "prediction_set_probs",             # list of normalized probs (same order)
+            "prediction_set_map"
         ]
     ]
+
+    pred_df_clean["no_cp_prob_set"] = pred_df_clean.apply(
+        lambda r: {
+            "H": float(r["prob_home_win"]),
+            "D": float(r["prob_draw"]),
+            "A": float(r["prob_away_win"]),
+        },
+        axis=1,
+    )
+
+    # (Optional) normalize defensively in case of tiny numeric drift
+    def _norm_map(d):
+        s = sum(d.values())
+        return {k: (v / s if s > 0 else 1.0/len(d)) for k, v in d.items()}
+    pred_df_clean["no_cp_prob_set"] = pred_df_clean["no_cp_prob_set"].apply(_norm_map)
 
     pred_df_clean['predicted_confidence'] = np.round(pred_df_clean['predicted_confidence'],2)
 
     pred_df_clean.to_csv(
-        "results/GW12 results/season_predictions.csv", index=False
+        "results/GW12 test/season_predictions.csv", index=False
     )
 
     # --- Compute incremental points from predicted fixtures only ---
@@ -485,7 +506,7 @@ def main():
     table = table.sort_values("total_points", ascending=False).reset_index(drop=True)
 
     table.to_csv(
-        "results/GW12 results/predicted_table.csv",
+        "results/GW12 test/predicted_table.csv",
         index=False,
     )
 
